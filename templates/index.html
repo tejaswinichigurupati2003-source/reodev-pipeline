@@ -40,6 +40,7 @@ a.stat:hover{border-color:var(--acc);text-decoration:none}.stat b{display:block;
  <input type="hidden" name="tier" value="{{ tier or '' }}">
  <label><input type="checkbox" name="email" value="1" {{ 'checked' if only_email }}> only with email</label>
  <label><input type="checkbox" name="archived" value="1" {{ 'checked' if archived }}> archived ({{ archived_count }})</label>
+ <select name="fit" aria-label="Role fit"><option value="">any role</option><option value="best" {{ 'selected' if fit=='best' }}>Best fits only (DevRel, community, growth)</option><option value="hide" {{ 'selected' if fit=='hide' }}>Hide unlikely roles</option></select>
  <select name="status" aria-label="Stage"><option value="">any stage</option>{% for s in statuses %}<option {{ 'selected' if s==status }}>{{ s }}</option>{% endfor %}</select>
  <select name="sort" aria-label="Sort by">{% for k, label in sorts.items() %}<option value="{{ k }}" {{ 'selected' if k==sort }}>{{ label }}</option>{% endfor %}</select>
  <button class="pill dark">Apply</button>

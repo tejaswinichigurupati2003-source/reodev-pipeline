@@ -30,9 +30,10 @@ CACHE_FILE = "prospeo_raw.json"
 MAX_RETRIES = 2
 _sleep = time.sleep  # tests replace this
 
+# Research interviews: DevRel, community, developer marketing and growth first, tooling owners second. No sales leaders, founders or executives.
 TITLES = ["Developer Relations", "Developer Advocate", "Developer Marketing", "Developer Experience", "Community",
-          "Growth", "Demand Generation", "Marketing", "Revenue Operations", "GTM", "Sales", "Founder", "CEO"]
-SENIORITY = ["Founder/Owner", "C-Suite", "Vice President", "Head", "Director", "Manager"]
+          "Growth", "Product Marketing", "Marketing Operations", "Revenue Operations", "GTM"]
+SENIORITY = ["Vice President", "Head", "Director", "Manager", "Senior"]
 
 
 def max_enrich():

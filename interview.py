@@ -131,23 +131,24 @@ def build_guide(lead, usage=None):
             "usage": usage}
 
 
-def invite(lead, form_url, sender):
-    """(subject, email_body, linkedin_message). Honest about who we are and that Reo.Dev is the case company."""
+def invite(lead, form_url, sender, note=""):
+    """(subject, email_body, linkedin_message). Written by students about a class project: never as Reo.Dev, never a pitch.
+    It is upfront that Reo.Dev is the project's case company, and that the sender is a student and not a Reo.Dev employee."""
     name = lead.get("contact_name") or ""
     first = (name.split() or ["there"])[0]
     company = lead.get("company") or "your company"
     role = lead.get("contact_title")
     about = f"your experience as {role} at {company}" if role else f"your experience at {company}"
-    subject = f"20-minute research chat about developer signals at {company}"
+    subject = f"Student research: 20 minutes on developer signals at {company}"
     body = (f"Hi {first},\n\n"
-            "I am a student at Mesa School of Business working on a strategy project about how developer-focused companies "
-            "find and act on developer activity. The case company is Reo.Dev. This is research, not a sales call, and I would "
-            f"like to learn from {about}.\n\n"
-            f"Would you be open to a 20-minute conversation? You can pick a time or say no here: {form_url}\n\n"
-            f"Thank you,\n{sender}")
-    linkedin = (f"Hi {first}, I am a Mesa School of Business student researching how developer-focused companies use developer "
-                f"activity data (our case company is Reo.Dev). Could I ask you 20 minutes of questions about your work at {company}? "
-                f"No pitch. Details and times: {form_url}")
+            "I am a student at Mesa School of Business working on a class strategy project about how developer-focused companies "
+            "find and act on developer activity (GitHub, docs, community, sign-ups). " + note +
+            "The project's case company is Reo.Dev, but I am a student, not a Reo.Dev employee, and this is research, not a sales call.\n\n"
+            f"Would you be open to 20 minutes to share {about}? You can pick a time, or just say no, here: {form_url}\n\n"
+            f"Thank you,\n{sender}\nMesa School of Business")
+    linkedin = (f"Hi {first}, I am a Mesa School of Business student working on a class project about how developer-focused companies use "
+                f"developer activity data (the case company is Reo.Dev, but I am a student, not an employee, and this is not a sales call). "
+                f"Could I ask you 20 minutes of questions about your work at {company}? Details and times: {form_url}")
     return subject, body, linkedin
 
 

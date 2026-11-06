@@ -17,6 +17,7 @@ from dotenv import load_dotenv
 
 import export
 import pipeline_io as io
+import personas
 import research_form
 
 load_dotenv()
@@ -171,7 +172,7 @@ def sync(rows):
 
 
 STAGE_ORDER = {name: n for n, name in enumerate(STATUSES)}
-SORTS = {"rank": "Best match first", "score": "Highest score", "company": "Company A-Z", "stage": "Stage", "recent": "Recently changed"}
+SORTS = {"interview": "Best interview targets first", "rank": "Company fit first", "score": "Highest score", "company": "Company A-Z", "stage": "Stage", "recent": "Recently changed"}
 EMAIL_RE = r"[^@\s]+@[^@\s]+\.[^@\s]+"
 
 
@@ -194,6 +195,11 @@ def _decorate(rows, tracker, edits):
                 r[f] = e.get(f) or None
         elif e.get("linkedin"):
             r["linkedin"] = e["linkedin"]
+        if r.get("contact_name") or r.get("email"):
+            fit = personas.interview_fit(r.get("contact_title"), r.get("headcount"))
+        else:
+            fit = {"score": -1, "label": "No contact yet", "reason": "No person to interview yet"}
+        r["role_score"], r["role_label"], r["role_reason"] = fit["score"], fit["label"], fit["reason"]
     return rows
 
 
@@ -249,7 +255,7 @@ def nav_counts():
     return counts
 
 
-def filter_leads(rows, tier=None, search=None, only_email=False, status=None, archived=False, sort="rank"):
+def filter_leads(rows, tier=None, search=None, only_email=False, status=None, archived=False, sort="interview", fit=None):
     """Filter and sort a list from all_leads(). archived: False = hide archived (default), True = only archived, "all" = both."""
     q = (search or "").strip().lower()
     out = []
@@ -266,6 +272,10 @@ def filter_leads(rows, tier=None, search=None, only_email=False, status=None, ar
             continue
         if status in STATUSES and r["contact_status"] != status:
             continue
+        if fit == "best" and r["role_score"] < 3:      # DevRel, community, developer marketing, growth
+            continue
+        if fit == "hide" and r["role_score"] == 0:     # hide the people who are unlikely to reply
+            continue
         out.append(r)
     rank = lambda r: (0 if r["manual"] else 1, r["rank"] if r["rank"] is not None else 10 ** 6, (r["company"] or "").lower())
     if sort == "score":
@@ -276,8 +286,10 @@ def filter_leads(rows, tier=None, search=None, only_email=False, status=None, ar
         out.sort(key=lambda r: (STAGE_ORDER.get(r["contact_status"], 99), rank(r)))
     elif sort == "recent":
         out.sort(key=lambda r: r["updated_at"] or "", reverse=True)
-    else:
+    elif sort == "rank":
         out.sort(key=rank)
+    else:  # interview: best roles first, then the stronger company, people without a contact last
+        out.sort(key=lambda r: (-r["role_score"], rank(r)))
     return out
 
 
@@ -422,7 +434,7 @@ def update_tracker(key, fields, now, expected=None):
                    [key] + [clean[k] for k in TRACKER_FIELDS] + [now])
 
 
-CR_STATUSES = ["I use it now", "I used it before", "I looked at it", "I have not used it"]
+CR_STATUSES = research_form.CR_STATUSES
 MAX_RESPONSES_PER_HOUR = 30  # a flood guard for the public form
 
 

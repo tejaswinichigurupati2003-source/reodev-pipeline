@@ -75,7 +75,7 @@ def test_contacts_ranked_and_filtered():
     contacts, rejected = s4_contacts.pick_contacts(HUNTER["data"]["emails"], "50-200")
     assert [c["email"] for c in contacts] == ["dana@acme.dev", "gro@acme.dev"]  # CEO excluded at 50+, low-confidence + engineer excluded
     why = {r["email"]: r["why"] for r in rejected}
-    assert "founder/CEO" in why["ceo@acme.dev"] and "confidence" in why["low@acme.dev"] and "persona" in why["eng@acme.dev"]
+    assert "poor interview target" in why["ceo@acme.dev"] and "confidence" in why["low@acme.dev"] and "persona" in why["eng@acme.dev"]
 
 
 def test_small_company_allows_ceo():

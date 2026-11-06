@@ -13,7 +13,7 @@ import re
 from urllib.parse import quote
 
 import apollo
-from personas import FOUNDER_TIER, TIERS, classify  # noqa: F401  (re-exported: tests and callers use s4_contacts.classify)
+from personas import FOUNDER_TIER, TIERS, classify, interview_fit  # noqa: F401  (re-exported: tests and callers use s4_contacts.classify)
 import hunter
 import prospeo
 import users
@@ -44,20 +44,24 @@ def pick_contacts(hunter_emails, headcount):
                "title": e.get("position"), "hunter_confidence": e.get("confidence") or 0,
                "linkedin": e.get("linkedin")}
         tier = classify(e.get("position"))
+        fit = interview_fit(e.get("position"), headcount)
         reason = None
         if not (e.get("first_name") and e.get("last_name")):
             reason = "no first/last name"
         elif who["hunter_confidence"] < MIN_CONFIDENCE:
             reason = f"Hunter confidence {who['hunter_confidence']} < {MIN_CONFIDENCE}"
-        elif tier is None:
+        elif fit["score"] <= 0:
+            reason = f"poor interview target: {fit['reason']} ({e.get('position') or 'no title'})"
+        elif tier is None and fit["score"] < 2:
             reason = f"title not on persona list ({e.get('position') or 'none'})"
-        elif tier[0] == FOUNDER_TIER and not small_ok:
+        elif tier and tier[0] == FOUNDER_TIER and not small_ok:
             reason = f"founder/CEO only for companies under ~{SMALL_COMPANY} people (headcount {headcount})"
         if reason:
             rejected.append({**who, "why": reason})
         else:
-            eligible.append({**who, "tier": tier[0], "persona": tier[1]})
-    eligible.sort(key=lambda c: (c["tier"], -c["hunter_confidence"]))
+            tier = tier or (5, "Marketing or revenue operations")
+            eligible.append({**who, "tier": tier[0], "persona": tier[1], "role_score": fit["score"]})
+    eligible.sort(key=lambda c: (-c["role_score"], c["tier"], -c["hunter_confidence"]))
     return eligible[:MAX_CONTACTS], rejected + eligible[MAX_CONTACTS:]
 
 
@@ -72,10 +76,13 @@ def make_want(headcount):
     small_ok = hc is None or hc < SMALL_COMPANY
 
     def want(title):
+        """Sort key (lower = better) for people worth spending a credit on: DevRel, community, developer marketing and growth first.
+        Sales leaders, recruiters, event and performance marketers and executives at big companies return None (never looked up)."""
+        fit = interview_fit(title, headcount)
         tier = classify(title)
-        if tier is None or (tier[0] == FOUNDER_TIER and not small_ok):
+        if fit["score"] <= 0 or (tier is None and fit["score"] < 2) or (tier and tier[0] == FOUNDER_TIER and not small_ok):
             return None
-        return tier[0]
+        return (4 - fit["score"], tier[0] if tier else 5)
     return want
 
 

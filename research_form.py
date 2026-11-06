@@ -10,6 +10,7 @@ import json
 MAX_TEXT = 2000
 REFERRALS = 3
 OPT_OUT = "Prefer not to say"
+CR_STATUSES = ["I use it now", "I used it before", "I looked at it", "I have not used it"]
 
 QUESTIONS = [
     {"id": "q1", "title": "How does your team use Common Room day to day, and who uses it?",
@@ -165,3 +166,30 @@ def flatten(parsed):
     for g in FIELD_GROUPS:
         row["p_" + g["name"]] = (parsed.get("profile") or {}).get(g["name"], "")
     return row
+
+
+# ---------------------------------------------------------------- the screens (one question per screen, grouped into acts)
+ACTS = [("about", "About you", "👋"), ("use", "How you use it", "🧭"), ("gaps", "Gaps and signals", "🔍"),
+        ("change", "Change", "🔄"), ("wrap", "Wrap up", "🎁")]
+ACT_OF = {"q1": "use", "q2": "use", "q3": "use", "q4": "use", "q5": "gaps", "q6": "gaps", "q7": "gaps", "q8": "change", "q9": "change", "q10": "wrap"}
+
+
+def build_screens():
+    """The ordered screens the form shows. Short single-choice questions get their own one-tap screen (they answer and move on);
+    each main question then has one screen for its tap-to-select chips and its written answer."""
+    out = [{"id": "intro", "type": "intro", "act": None},
+           {"id": "you", "type": "you", "act": "about", "title": "About you"}]
+    for g in PROFILE:
+        out.append({"id": "p_" + g["name"], "type": "single", "name": "p_" + g["name"], "label": g["label"], "options": g["options"], "act": "about"})
+    out.append({"id": "cr_status", "type": "single", "name": "cr_status", "label": "Have you used Common Room?", "options": CR_STATUSES,
+                "act": "about", "note": "The questions adjust to your answer."})
+    for q in QUESTIONS:
+        for g in q["groups"]:
+            if g.get("kind") == "select":
+                out.append({"id": f"{q['id']}_{g['name']}", "type": "single", "name": f"{q['id']}_{g['name']}", "label": g["label"],
+                            "options": g["options"], "act": ACT_OF[q["id"]], "only_if": g.get("only_if"), "qid": q["id"]})
+        out.append({"id": q["id"], "type": "question", "q": q, "act": ACT_OF[q["id"]]})
+    for g in SCHEDULE:
+        out.append({"id": "p_" + g["name"], "type": "single", "name": "p_" + g["name"], "label": g["label"], "options": g["options"], "act": "wrap"})
+    out.append({"id": "finish", "type": "finish", "act": "wrap", "title": "Review and send"})
+    return out

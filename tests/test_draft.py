@@ -1,66 +1,65 @@
+"""Invitation drafts: written by students about a class project, never as Reo.Dev, never a pitch, never invented."""
 import pytest
 
-import llm
+import interview
 import pipeline_io
 from steps import s5_draft
 
-RAW = {"pages": {"https://acme.dev": {"ok": True, "text": "We build an open-source API gateway. Join our community on Discord."}}}
-GOOD_BODY = ("Hi Dana, I saw that Acme Dev runs an open-source gateway with an active Discord community. "
-             "Reo.Dev turns developer activity such as GitHub stars, documentation visits and package installs into a clear list "
-             "of the companies and people showing real interest, which helps a developer relations lead show what the community "
-             "brings in. Would you be open to a 15 minute call to see whether it fits how your team works?")
+RAW = {"pages": {}}
+LEAD = {"contact_name": "Dana Lee", "contact_title": "Head of Developer Relations", "company": "Acme Dev"}
 
 
-def draft(**kw):
-    base = {"subject": "Turning community activity into pipeline", "body": GOOD_BODY, "hook_quote": "Join our community on Discord",
-            "hook_source_url": "https://acme.dev", "no_hook_reason": ""}
-    return {**base, **kw}
+def test_the_invitation_says_student_and_never_speaks_as_reo_dev():
+    subject, body, linkedin = interview.invite(LEAD, "https://x.test/research", "Tej")
+    for text in (body, linkedin):
+        low = text.lower()
+        assert "student" in low and "not a sales call" in low                    # who we are and what this is
+        assert "not a reo.dev employee" in low or "not an employee" in low        # the plain statement of who we are not
+        assert "reo.dev" in low                                                   # honest: the case company is named, never hidden
+    assert not any(line.strip() == "Reo.Dev" for line in body.splitlines())      # never signed as Reo.Dev
+    assert body.rstrip().endswith("Tej\nMesa School of Business") and "https://x.test/research" in body
+    assert subject.startswith("Student research") and "Acme Dev" in subject
+    blob = (subject + body + linkedin).lower()
+    for banned in ("zoom", "acqui", "discount", "% off", "customers include", "nvidia", "langchain", "n8n", "revenue intelligence platform"):
+        assert banned not in blob, banned                                         # no pitch, no product claims, no customer names
 
 
-def test_clean_draft_has_no_flags():
-    d, flags = s5_draft.check(draft(), "Dana", RAW)
-    assert flags == [] and d["hook_quote"]
+def test_the_greeting_and_role_are_filled_in_and_missing_details_do_not_break_it():
+    _, body, _ = interview.invite(LEAD, "u", "Tej")
+    assert body.startswith("Hi Dana,") and "as Head of Developer Relations at Acme Dev" in body
+    _, body2, _ = interview.invite({"company": "Acme Dev"}, "u", "Tej")
+    assert body2.startswith("Hi there,") and "your experience at Acme Dev" in body2 and "{" not in body2
 
 
-def test_fabricated_hook_removed_and_flagged():
-    d, flags = s5_draft.check(draft(hook_quote="We just raised a huge round"), "Dana", RAW)
-    assert d["hook_quote"] == "" and any("hook removed" in f for f in flags)
-
-
-@pytest.mark.parametrize("bad", ["Since Zoom bought them, many teams are unsure.", "We offer a 20% discount.", "Join 500 teams."])
-def test_banned_content_flagged(bad):
-    _, flags = s5_draft.check(draft(body=GOOD_BODY + " " + bad), "Dana", RAW)
-    assert flags
-
-
-def test_digit_in_company_name_and_in_verified_quote_not_flagged():
-    raw = {"pages": {"https://acme.dev": {"ok": True, "text": "Join 10k+ developers in our community."}}}
-    body = GOOD_BODY.replace("Join our community", "x").replace("an active Discord community.", 'a community: "Join 10k+ developers in our community." Teams like n8n use Reo.Dev.')
-    d, flags = s5_draft.check(draft(body=body, hook_quote="Join 10k+ developers in our community.", hook_source_url="https://acme.dev"), "Dana", raw)
-    assert not any("number" in f for f in flags)
-
-
-def test_wrong_greeting_and_long_subject_flagged():
-    _, flags = s5_draft.check(draft(body=GOOD_BODY.replace("Hi Dana,", "Dear Sir,"), subject="one two three four five six seven eight"), "Dana", RAW)
-    assert len(flags) == 2
-
-
-def test_run_writes_drafts_with_signoff_never_sent(tmp_path, monkeypatch):
+def _prepare(tmp_path, monkeypatch, signals):
     monkeypatch.setattr(pipeline_io, "DATA_DIR", tmp_path)
     monkeypatch.setenv("SENDER_NAME", "Tej")
-    pipeline_io.save_json("acme.dev", "step1_raw.json", RAW)
-    pipeline_io.save_json("acme.dev", "step2_extracted.json", {"company": "Acme Dev", "devrel_signals": []})
-    pipeline_io.save_json("acme.dev", "step4_contacts.json", {"contacts": [{"email": "dana@acme.dev", "name": "Dana Lee", "title": "Head of DevRel", "persona": "DevRel"}]})
-    monkeypatch.setattr(llm, "generate_json", lambda *a, **k: draft())
+    monkeypatch.delenv("RESEARCH_FORM_URL", raising=False)
+    pipeline_io.save_json("acme.dev", "step2_extracted.json", {"company": "Acme Dev", "devrel_signals": signals})
+    pipeline_io.save_json("acme.dev", "step4_contacts.json", {"contacts": [
+        {"email": "dana@acme.dev", "name": "Dana Lee", "title": "Head of Developer Relations"},
+        {"email": "noname@acme.dev", "name": None, "title": "x"}]})
+
+
+def test_drafts_are_deterministic_student_invites_and_never_sent(tmp_path, monkeypatch):
+    _prepare(tmp_path, monkeypatch, [])
     res = s5_draft.run("acme.dev")
     d = res["drafts"]["dana@acme.dev"]
-    assert d["body"].endswith("Tej\nReo.Dev") and not d["needs_review"] and res["sent"] is False
+    assert res["sent"] is False and set(res["drafts"]) == {"dana@acme.dev"}          # contacts without a name are skipped
+    assert d["needs_review"] is False and d["flags"] == [] and d["hook_quote"] == ""
+    assert "student" in d["body"] and "https://reodev-leads.vercel.app/research" in d["body"]
+    assert "developer community" not in d["body"]                                    # no signal on file, so no personal touch invented
+    assert s5_draft.run("acme.dev", fresh=True) == res                               # same input, same words: nothing random
 
 
-def test_failed_draft_is_isolated(tmp_path, monkeypatch):
-    monkeypatch.setattr(pipeline_io, "DATA_DIR", tmp_path)
-    pipeline_io.save_json("a.dev", "step1_raw.json", RAW)
-    pipeline_io.save_json("a.dev", "step2_extracted.json", {})
-    pipeline_io.save_json("a.dev", "step4_contacts.json", {"contacts": [{"email": "x@a.dev", "name": "X Y", "title": "t"}]})
-    monkeypatch.setattr(llm, "generate_json", lambda *a, **k: (_ for _ in ()).throw(RuntimeError("boom")))
-    assert s5_draft.run("a.dev")["drafts"]["x@a.dev"]["needs_review"] is True
+def test_the_personal_touch_appears_only_when_the_company_really_has_a_community(tmp_path, monkeypatch):
+    _prepare(tmp_path, monkeypatch, [{"signal": "Discord", "evidence_quote": "Join our Discord", "source_url": "https://acme.dev"}])
+    d = s5_draft.run("acme.dev")["drafts"]["dana@acme.dev"]
+    assert "I noticed Acme Dev has a public developer community" in d["body"]
+    assert d["hook_quote"] == "Join our Discord" and d["hook_source_url"] == "https://acme.dev"
+
+
+def test_the_form_link_can_be_pointed_at_a_neutral_address(tmp_path, monkeypatch):
+    _prepare(tmp_path, monkeypatch, [])
+    monkeypatch.setenv("RESEARCH_FORM_URL", "https://students.example.org/talk")
+    assert "https://students.example.org/talk" in s5_draft.run("acme.dev")["drafts"]["dana@acme.dev"]["body"]

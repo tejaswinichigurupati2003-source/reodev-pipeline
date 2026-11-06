@@ -51,19 +51,28 @@ def test_page_has_the_teams_ten_questions_word_for_word(client):
     for q in TEAM_WORDING:
         assert q.replace("’", "’") in html.replace("&#39;", "'") or q in html, q
     assert [q["title"] for q in rf.QUESTIONS] == TEAM_WORDING
-    assert html.count('class="step') >= 13 and 'data-id="finish"' in html                      # intro + about you + 10 questions + review
+    assert html.count('class="step q"') == 10 and 'data-id="finish"' in html and 'data-id="intro"' in html     # welcome, 10 questions, review
     assert "Question 10 of 10" in html and "Skip" in html
 
 
-def test_dropdowns_and_chips_are_real_form_controls(client):
+def test_short_lists_are_tap_to_pick_rows_and_chips_stay_chips(client):
     html = client.get("/research").get_data(as_text=True)
     for option in ("Salesforce", "HubSpot", "Within 3 months", "Leadership or founders", "More than 2 years", "Every day",
                    "Revenue operations", "VP or head of", "51 to 200", "Weekday afternoons", "Singapore / Asia Pacific"):
-        assert f"<option >{option}</option>" in html or f">{option}</option>" in html, option
-    for name in ("q1_length", "q1_often", "q7_crm", "q8_renewal", "q8_decider", "p_function", "p_seniority", "p_size", "p_window", "p_zone"):
-        assert f'<select id="{name}"' in html or f'name="{name}"' in html, name
+        assert f'<span class="txt">{option}</span>' in html, option               # a big row with a radio dot, not a hidden dropdown
+    for name in ("q1_length", "q1_often", "q7_crm", "q8_renewal", "q8_decider", "p_function", "p_seniority", "p_size", "p_window", "p_zone", "cr_status"):
+        assert f'type="radio" name="{name}"' in html, name
     assert html.count('type="checkbox" name="q9_triggers"') == 7 and html.count('type="checkbox" name="q9_blockers"') == 6
     assert 'name="ref_name_3"' in html and 'name="website"' in html                              # referrals and the bot trap
+
+
+def test_the_form_is_a_stepper_with_named_acts_and_keyboard_help(client):
+    html = client.get("/research").get_data(as_text=True)
+    for act in ("About you", "How you use it", "Gaps and signals", "Change", "Wrap up"):
+        assert f'<span class="alabel">' in html and act in html, act
+    assert 'id="backbtn"' in html and 'id="pfill"' in html and 'id="acts"' in html
+    assert html.count('data-auto="1"') == 11 and html.count("<kbd>1</kbd>") == 11             # every one-tap screen has number-key shortcuts
+    assert "press Enter" in html and "Ctrl + Enter" in html and "confetti" in html
 
 
 def test_works_without_javascript_and_adapts_with_it(client):
@@ -79,7 +88,8 @@ def test_non_javascript_error_keeps_everything_they_typed(client):
     r = send(client, {**BASE, "name": "", "q1": "daily use", "q1_who": ["Marketing", "Founders"], "q7_crm": "HubSpot", "p_zone": "US Eastern"}, json_mode=False)
     html = r.get_data(as_text=True)
     assert r.status_code == 400 and "name and company" in html
-    assert "daily use" in html and re.search(r'value="Marketing"\s+checked', html) and re.search(r"<option selected>HubSpot</option>", html)
+    assert "daily use" in html and re.search(r'value="Marketing"\s+checked', html) and re.search(r'name="q7_crm" value="HubSpot"\s+checked', html)
+    assert re.search(r'name="p_zone" value="US Eastern"\s+checked', html)
 
 
 # ---------------------------------------------------------------- saving

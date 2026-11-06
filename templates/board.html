@@ -31,15 +31,18 @@ dialog label{display:block;font-size:12px;color:var(--mut);margin:10px 0 3px}dia
 {% endblock %}
 {% block content %}
  <div class="head"><div><h1>Outreach board</h1><div class="sub">{{ total }} of {{ nav().values()|sum }} leads shown &middot; drag a card to change its stage</div>
-  {% if tier or only_email or q %}<div class="sub" style="margin-top:8px"><b style="color:var(--fg)">Filters on:</b>
+  {% if tier or only_email or q or fit %}<div class="sub" style="margin-top:8px"><b style="color:var(--fg)">Filters on:</b>
+   {% if fit %}<span class="tag t-MY">{{ 'best interview targets' if fit=='best' else 'unlikely hidden' }}</span>{% endif %}
    {% if q %}<span class="tag t-MY">search: {{ q }}</span>{% endif %}
    {% if tier %}<span class="tag t-{{ tier }}">{{ 'Added by you' if tier=='MY' else 'Tier ' ~ tier }}</span>{% endif %}
    {% if only_email %}<span class="tag t-MY">only with email</span>{% endif %}
    <a href="{{ url_for('board') }}" style="margin-left:6px">Clear filters</a></div>{% endif %}</div>
   <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-  <form method="get" role="search" style="display:flex;gap:6px"><input type="hidden" name="tier" value="{{ tier or '' }}">{% if only_email %}<input type="hidden" name="email" value="1">{% endif %}
+  <form method="get" role="search" style="display:flex;gap:6px"><input type="hidden" name="tier" value="{{ tier or '' }}">{% if only_email %}<input type="hidden" name="email" value="1">{% endif %}{% if fit %}<input type="hidden" name="fit" value="{{ fit }}">{% endif %}
    <input name="q" id="bq" value="{{ q }}" placeholder="Search company or person" aria-label="Search the board" autocomplete="off" style="min-width:200px"><button class="pill">Search</button></form>
-  <a class="pill {{ 'dark' if only_email }}" href="{{ url_for('board', tier=tier, q=q or None, email=None if only_email else '1') }}">{{ 'Only with email: on' if only_email else 'Only with email' }}</a>
+  <a class="pill {{ 'dark' if fit=='best' }}" href="{{ url_for('board', tier=tier, q=q or None, email='1' if only_email else None, fit=None if fit=='best' else 'best') }}" title="DevRel, community, developer marketing and growth">{{ 'Best targets: on' if fit=='best' else 'Best targets only' }}</a>
+  <a class="pill {{ 'dark' if fit=='hide' }}" href="{{ url_for('board', tier=tier, q=q or None, email='1' if only_email else None, fit=None if fit=='hide' else 'hide') }}" title="Hide sales leaders, recruiters, event and performance marketers, executives at big companies">{{ 'Unlikely hidden' if fit=='hide' else 'Hide unlikely' }}</a>
+  <a class="pill {{ 'dark' if only_email }}" href="{{ url_for('board', tier=tier, q=q or None, fit=fit, email=None if only_email else '1') }}">{{ 'Only with email: on' if only_email else 'Only with email' }}</a>
   <button class="pill dark" data-add="not contacted">+ Add contact</button></div></div>
  <div class="board" id="board" data-csrf="{{ csrf() }}">
  {% include "_columns.html" %}</div>

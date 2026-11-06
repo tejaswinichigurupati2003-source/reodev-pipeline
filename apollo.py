@@ -30,9 +30,8 @@ MAX_ENRICH = 3
 MAX_RETRIES = 2
 _sleep = time.sleep  # tests replace this
 
-TITLES = ["head of developer relations", "developer advocate", "developer marketing", "community manager",
-          "head of community", "head of growth", "vp marketing", "demand generation", "revenue operations",
-          "head of sales", "founder", "ceo"]
+TITLES = ["head of developer relations", "developer advocate", "developer marketing", "developer experience", "community manager",
+          "head of community", "head of growth", "growth marketing", "product marketing", "marketing operations", "revenue operations"]
 STATUS_CONFIDENCE = {"verified": 95, "likely to engage": 80, "extrapolated": 60, "unavailable": 20}
 
 

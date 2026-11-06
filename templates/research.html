@@ -2,222 +2,268 @@
 <title>A short research conversation</title>
 <script>document.documentElement.className='js'</script>
 <style>
-:root{--bg:#f1f3f6;--bg2:#f4f1e6;--fg:#171715;--mut:#6f6f69;--card:#fff;--line:#e3e3de;--dark:#161614;--acc:#2f5bea;--accbg:#e8edfc;--ok:#1b7f4d;--okbg:#e6f4ea;--warn:#a2362b;--warnbg:#fdeceb}
-@media(prefers-color-scheme:dark){:root{--bg:#101113;--bg2:#15160f;--fg:#efefe9;--mut:#a0a09a;--card:#232321;--line:#3a3a37;--dark:#efefe9;--acc:#8aa6ff;--accbg:#1b2338;--ok:#6fdc9c;--okbg:#172a1f;--warn:#ff9d93;--warnbg:#33201f}}
-*{box-sizing:border-box}body{margin:0;min-height:100vh;color:var(--fg);background:linear-gradient(160deg,var(--bg),var(--bg2));background-attachment:fixed;font:16px/1.55 system-ui,-apple-system,Segoe UI,sans-serif}
-.wrap{max-width:720px;margin:0 auto;padding:18px 16px 70px}
-.top{display:flex;align-items:center;gap:12px;margin:6px 0 14px}.logo{width:38px;height:38px;border-radius:11px;background:var(--dark);color:var(--bg);display:grid;place-items:center;font-weight:800}
-.mut{color:var(--mut);font-size:14px}
-#progress{height:6px;border-radius:9px;background:var(--line);overflow:hidden;display:none}.js #progress{display:block}
-#progress i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--acc),var(--ok));border-radius:9px;transition:width .35s ease}
-.meta{display:none;justify-content:space-between;gap:10px;margin:8px 2px 14px;font-size:13px;color:var(--mut)}.js .meta{display:flex}
-.card{background:var(--card);border-radius:22px;padding:26px;box-shadow:0 1px 2px #0000000d,0 12px 36px #00000012}
-.step{margin-bottom:18px}.js .step{display:none;margin:0}.js .step.active{display:block}
-.step.in-fwd{animation:fwd .32s ease}.step.in-back{animation:back .32s ease}
-@keyframes fwd{from{opacity:0;transform:translateX(22px)}to{opacity:1;transform:none}}@keyframes back{from{opacity:0;transform:translateX(-22px)}to{opacity:1;transform:none}}
-@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
-h1{font-size:30px;line-height:1.15;margin:0 0 8px;letter-spacing:-.02em}h2{font-size:22px;line-height:1.3;margin:0 0 6px;letter-spacing:-.01em}
-.qnum{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--acc);font-weight:700;margin-bottom:6px}
-.hint{color:var(--mut);margin:0 0 14px;font-size:15px}
-label.f,.glabel{display:block;font-size:13px;font-weight:600;color:var(--mut);margin:14px 0 5px}
-input[type=text],input[type=email],textarea,select{width:100%;font:inherit;color:inherit;background:var(--bg);border:1.5px solid var(--line);border-radius:12px;padding:11px 13px;transition:border-color .15s,box-shadow .15s}
-textarea{min-height:130px;resize:vertical}select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--mut) 50%),linear-gradient(135deg,var(--mut) 50%,transparent 50%);background-position:calc(100% - 20px) 50%,calc(100% - 14px) 50%;background-size:6px 6px;background-repeat:no-repeat;padding-right:36px;cursor:pointer}
-input:focus,textarea:focus,select:focus{outline:none;border-color:var(--acc);box-shadow:0 0 0 4px var(--accbg)}
-.invalid{border-color:var(--warn)!important;box-shadow:0 0 0 4px var(--warnbg)!important}.fe{color:var(--warn);font-size:13px;margin:4px 0 0;display:none}.invalid+.fe,.fe.show{display:block}
-.count{text-align:right;font-size:12px;color:var(--mut);margin-top:3px}
-.chips{display:flex;flex-wrap:wrap;gap:8px}.chip{position:relative;cursor:pointer}
-.chip input{position:absolute;opacity:0;inset:0;cursor:pointer;width:100%;height:100%;margin:0}
-.chip span{display:inline-block;padding:7px 14px;border:1.5px solid var(--line);border-radius:99px;font-size:14px;background:var(--bg);transition:all .15s;user-select:none}
+:root{--bg:#f6f4ff;--bg2:#fff3ec;--fg:#1a1633;--mut:#6d6a85;--card:#fff;--line:#e4e1f2;--soft:#f1effb;--acc:#5b5bf0;--accbg:#ebebff;--acc2:#ff7a59;--ok:#13a463;--okbg:#e2f6ec;--warn:#d6362b;--warnbg:#fdecea;--bar:#ffffffd9}
+@media(prefers-color-scheme:dark){:root{--bg:#0f1024;--bg2:#1c0f1f;--fg:#f3f1ff;--mut:#a9a6c4;--card:#191a33;--line:#2e2f52;--soft:#222446;--acc:#8c8cff;--accbg:#26275a;--acc2:#ff9477;--ok:#4fe0a0;--okbg:#10301f;--warn:#ff8f86;--warnbg:#3a1d22;--bar:#12132bd9}}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;min-height:100vh;color:var(--fg);background:radial-gradient(1200px 600px at 15% -10%,var(--accbg),transparent 60%),radial-gradient(900px 500px at 100% 0,var(--bg2),transparent 55%),var(--bg);background-attachment:fixed;font:17px/1.55 "Poppins",system-ui,-apple-system,Segoe UI,sans-serif}
+.wrap{max-width:760px;margin:0 auto;padding:0 18px 80px}
+/* ---------- top bar: back arrow + named acts */
+.bar{position:sticky;top:0;z-index:20;margin:0 -18px 26px;padding:12px 18px 0;background:var(--bar);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.bar[hidden]{display:none}.barrow{display:flex;align-items:center;gap:14px;max-width:760px;margin:0 auto;padding-bottom:12px}
+.iconbtn{flex:none;width:42px;height:42px;border-radius:12px;border:1.5px solid var(--line);background:var(--card);color:var(--fg);font-size:18px;cursor:pointer;transition:all .15s}
+.iconbtn:hover:not(:disabled){border-color:var(--acc);transform:translateX(-2px)}.iconbtn:disabled{opacity:.35;cursor:default}
+.acts{list-style:none;margin:0;padding:0;display:flex;align-items:center;flex:1;min-width:0;overflow:hidden}
+.acts li{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--mut);white-space:nowrap;cursor:default;flex:0 1 auto}
+.acts li+li:before{content:"";display:block;width:clamp(10px,3vw,34px);height:2px;background:var(--line);margin:0 8px;flex:none;border-radius:2px}
+.ring{width:22px;height:22px;border-radius:50%;border:2px solid var(--line);flex:none;display:grid;place-items:center;font-size:11px;font-weight:700;transition:all .25s}
+.acts li[data-state=current]{color:var(--fg);font-weight:600}.acts li[data-state=current] .ring{border-color:var(--acc2);box-shadow:0 0 0 4px #ff7a5926;background:radial-gradient(circle,var(--acc2) 38%,transparent 42%)}
+.acts li[data-state=done]{color:var(--fg);cursor:pointer}.acts li[data-state=done] .ring{background:var(--ok);border-color:var(--ok);color:#fff}.acts li[data-state=done] .ring:after{content:"\2713"}
+.acts li[data-state=done]:hover .alabel{text-decoration:underline}
+.pfill{position:absolute;left:0;bottom:-1px;height:3px;width:0;background:linear-gradient(90deg,var(--acc),var(--acc2));transition:width .4s ease;border-radius:0 3px 3px 0}
+.js .pbar{display:block}.pbar{display:none}
+/* ---------- screens */
+.step{margin:0 0 22px}.js .step{display:none;margin:0}.js .step.active{display:block}
+.step.in-fwd{animation:fwd .38s cubic-bezier(.2,.8,.2,1)}.step.in-back{animation:back .38s cubic-bezier(.2,.8,.2,1)}
+@keyframes fwd{from{opacity:0;transform:translateY(18px) scale(.985)}to{opacity:1;transform:none}}@keyframes back{from{opacity:0;transform:translateY(-14px) scale(.985)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}html{scroll-behavior:auto}}
+.hero{min-height:78vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:30px 4px}
+.hero h1{font-size:clamp(34px,7vw,58px);line-height:1.08;margin:0 0 14px;letter-spacing:-.03em;background:linear-gradient(90deg,var(--fg),var(--acc));-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p{max-width:560px;margin:0 0 12px;color:var(--mut)}.hero .brand{display:inline-flex;align-items:center;gap:10px;margin-bottom:26px;font-weight:600;color:var(--fg)}
+.logo{width:40px;height:40px;border-radius:12px;background:var(--fg);color:var(--bg);display:grid;place-items:center;font-weight:800}
+.qcard{background:var(--card);border:2px solid var(--acc);border-radius:26px;padding:30px 30px 26px;box-shadow:0 18px 50px #5b5bf01f}
+@media(max-width:560px){.qcard{padding:22px 18px}}
+.kick{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--acc2);font-weight:700;margin-bottom:8px}
+h2{font-size:clamp(22px,4.6vw,30px);line-height:1.25;margin:0 0 6px;letter-spacing:-.015em;font-weight:700}
+.hint{color:var(--mut);margin:2px 0 18px;font-size:15px}.req{color:var(--acc2)}
+/* ---------- answers */
+.opts{display:grid;gap:10px;margin:16px 0 4px}
+.opt{position:relative;display:flex;align-items:center;gap:14px;padding:15px 18px;border:2px solid var(--line);border-radius:18px;background:var(--soft);cursor:pointer;transition:transform .15s,border-color .15s,background .15s,box-shadow .15s;user-select:none}
+.opt:hover{border-color:var(--acc);transform:translateY(-1px)}.opt input{position:absolute;opacity:0;inset:0;width:100%;height:100%;margin:0;cursor:pointer}
+.dot{width:22px;height:22px;border-radius:50%;border:2px solid var(--mut);flex:none;transition:all .18s;display:grid;place-items:center}
+.opt input:checked~.dot{border-color:var(--acc);background:var(--acc);box-shadow:inset 0 0 0 4px var(--card)}
+.opt:has(input:checked){border-color:var(--acc);background:var(--accbg);box-shadow:0 6px 20px #5b5bf02b}
+.opt:has(input:focus-visible){outline:3px solid var(--acc);outline-offset:2px}
+.opt .txt{flex:1;font-weight:500}.opt kbd{font:inherit;font-size:12px;color:var(--mut);border:1.5px solid var(--line);border-radius:7px;padding:1px 8px;background:var(--card)}
+@media(hover:none){.opt kbd{display:none}}
+.opt.picked{animation:pick .35s ease}@keyframes pick{50%{transform:scale(1.02)}}
+.glabel{font-size:13px;font-weight:600;color:var(--mut);margin:18px 0 8px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}.chip{position:relative;cursor:pointer}.chip input{position:absolute;opacity:0;inset:0;width:100%;height:100%;margin:0;cursor:pointer}
+.chip span{display:inline-block;padding:8px 16px;border:2px solid var(--line);border-radius:99px;font-size:14px;background:var(--soft);transition:all .15s;user-select:none}
 .chip:hover span{border-color:var(--acc)}.chip input:checked+span{background:var(--accbg);border-color:var(--acc);color:var(--acc);font-weight:600}.chip input:checked+span:before{content:"\2713\00a0"}
-.chip input:focus-visible+span{outline:2px solid var(--acc);outline-offset:2px}
-.grp{margin:14px 0}.grp[hidden]{display:none}
-.choice{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
-.choice label{position:relative;cursor:pointer}.choice input{position:absolute;opacity:0;inset:0;width:100%;height:100%;margin:0;cursor:pointer}
-.choice span{display:block;text-align:center;padding:12px 10px;border:1.5px solid var(--line);border-radius:14px;background:var(--bg);font-size:14px;transition:all .15s}
-.choice label:hover span{border-color:var(--acc)}.choice input:checked+span{background:var(--accbg);border-color:var(--acc);color:var(--acc);font-weight:600}.choice input:focus-visible+span{outline:2px solid var(--acc);outline-offset:2px}
-.two{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}@media(max-width:560px){.two{grid-template-columns:1fr}}
-.nav{display:none;justify-content:space-between;align-items:center;gap:10px;margin-top:22px}.js .nav{display:flex}
-.btn{font:inherit;border:1.5px solid var(--line);background:var(--card);color:var(--fg);border-radius:99px;padding:11px 22px;cursor:pointer;transition:all .15s}
-.btn:hover:not(:disabled){border-color:var(--acc);transform:translateY(-1px)}.btn:active:not(:disabled){transform:none}.btn:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
-.btn.primary{background:var(--dark);color:var(--bg);border-color:var(--dark);font-weight:600}.btn:disabled{opacity:.6;cursor:progress}
-.link{background:none;border:0;color:var(--mut);cursor:pointer;font:inherit;text-decoration:underline;padding:8px}.link:hover{color:var(--acc)}
-.kbd{font-size:12px;color:var(--mut);margin-top:10px}kbd{border:1px solid var(--line);border-radius:6px;padding:1px 6px;font:inherit;font-size:11px;background:var(--bg)}
-.err{background:var(--warnbg);color:var(--warn);border-radius:12px;padding:11px 14px;margin:0 0 14px}
-.draft{background:var(--accbg);border-radius:14px;padding:12px 14px;margin-bottom:14px;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;justify-content:space-between}
-.draft[hidden]{display:none}
-.review{list-style:none;padding:0;margin:0 0 6px}.review li{display:flex;gap:12px;justify-content:space-between;align-items:flex-start;padding:11px 0;border-bottom:1px solid var(--line)}
-.review b{display:block;font-size:14px}.review span.v{color:var(--mut);font-size:14px;overflow-wrap:anywhere}.review .skip{font-style:italic}
-.chk{display:flex;gap:10px;align-items:flex-start;font-size:15px;margin:12px 0;cursor:pointer}.chk input{margin-top:5px;width:18px;height:18px;flex:none}
-.ref{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}@media(max-width:560px){.ref{grid-template-columns:1fr}}.js .ref.later{display:none}
+.chip input:focus-visible+span{outline:3px solid var(--acc);outline-offset:2px}
+label.f{display:block;font-size:13px;font-weight:600;color:var(--mut);margin:16px 0 6px}
+input[type=text],input[type=email],textarea{width:100%;font:inherit;font-size:16px;color:inherit;background:var(--soft);border:2px solid var(--line);border-radius:16px;padding:13px 16px;transition:border-color .15s,box-shadow .15s}
+textarea{min-height:140px;resize:vertical}input:focus,textarea:focus{outline:none;border-color:var(--acc);box-shadow:0 0 0 5px var(--accbg)}
+.invalid{border-color:var(--warn)!important;box-shadow:0 0 0 5px var(--warnbg)!important}.fe{color:var(--warn);font-size:13px;margin:5px 0 0;display:none}.invalid+.fe,.fe.show{display:block}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}@media(max-width:600px){.two{grid-template-columns:1fr}}
+.count{text-align:right;font-size:12px;color:var(--mut);margin-top:4px}
+.ref{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}@media(max-width:600px){.ref{grid-template-columns:1fr}}.js .ref.later{display:none}
+.nav{display:none;justify-content:space-between;align-items:center;gap:12px;margin-top:26px}.js .nav{display:flex}
+.btn{font:inherit;font-weight:600;border:2px solid var(--line);background:var(--card);color:var(--fg);border-radius:99px;padding:13px 26px;cursor:pointer;transition:all .15s}
+.btn:hover:not(:disabled){border-color:var(--acc);transform:translateY(-2px)}.btn:active:not(:disabled){transform:none}.btn:focus-visible{outline:3px solid var(--acc);outline-offset:2px}.btn:disabled{opacity:.6;cursor:progress}
+.btn.go{background:linear-gradient(90deg,var(--acc),#7a5bf0 55%,var(--acc2));color:#fff;border-color:transparent;box-shadow:0 10px 26px #5b5bf046}
+.btn.go:hover:not(:disabled){box-shadow:0 14px 32px #5b5bf066}.btn.big{padding:16px 36px;font-size:18px}
+.enter{font-size:12px;opacity:.85;margin-left:8px;font-weight:500}@media(hover:none){.enter{display:none}}
+.link{background:none;border:0;color:var(--mut);cursor:pointer;font:inherit;font-size:15px;text-decoration:underline;padding:10px}.link:hover{color:var(--acc)}
+.err{background:var(--warnbg);color:var(--warn);border-radius:14px;padding:12px 16px;margin:0 0 16px}
+.draft{background:var(--accbg);border-radius:16px;padding:12px 16px;margin:0 0 16px;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;justify-content:space-between;font-size:15px}.draft[hidden]{display:none}
+.review{list-style:none;padding:0;margin:0 0 8px}.review .rh{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--acc2);font-weight:700;padding:16px 0 4px}
+.review li.r{display:flex;gap:12px;justify-content:space-between;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line)}
+.review b{display:block;font-size:14px;font-weight:600}.review .v{color:var(--mut);font-size:14px;overflow-wrap:anywhere}.review .skip{font-style:italic}
+.chk{display:flex;gap:12px;align-items:flex-start;font-size:15px;margin:14px 0;cursor:pointer}.chk input{margin-top:5px;width:20px;height:20px;flex:none;accent-color:var(--acc)}
 .hp{position:absolute;left:-9999px;height:0;overflow:hidden}
-.done{text-align:center;padding:14px 4px}.done .tick{width:72px;height:72px;border-radius:50%;background:var(--okbg);color:var(--ok);display:grid;place-items:center;margin:0 auto 14px;font-size:36px;animation:pop .45s ease}
-@keyframes pop{0%{transform:scale(.4);opacity:0}70%{transform:scale(1.1)}100%{transform:scale(1);opacity:1}}
-.spin{display:inline-block;width:14px;height:14px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px;margin-right:6px}@keyframes sp{to{transform:rotate(360deg)}}
-</style></head><body><main class="wrap">
-<header class="top"><span class="logo" aria-hidden="true">R</span><div><b>Research conversation</b><div class="mut">Mesa School of Business, Business Strategy Lab</div></div></header>
-
+.done{text-align:center;padding:60px 10px}.done .tick{width:92px;height:92px;border-radius:50%;background:var(--okbg);color:var(--ok);display:grid;place-items:center;margin:0 auto 20px;font-size:46px;animation:pop .5s cubic-bezier(.2,1.4,.4,1)}
+@keyframes pop{0%{transform:scale(.3);opacity:0}100%{transform:scale(1);opacity:1}}
+.spin{display:inline-block;width:15px;height:15px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px;margin-right:8px}@keyframes sp{to{transform:rotate(360deg)}}
+#confetti{position:fixed;inset:0;pointer-events:none;z-index:60}
+.credit{text-align:center;color:var(--mut);font-size:13px;margin-top:22px}
+@media(max-width:640px){.acts li .alabel{display:none}.acts li[data-state=current] .alabel{display:inline}.acts li+li:before{width:12px;margin:0 5px}}
+</style></head><body>
 {% if thanks %}
-<div class="card done"><div class="tick" aria-hidden="true">&#10003;</div><h1>Thank you</h1>
- <p>We have your answers and will email you to confirm a time if you asked for a call. If you change your mind about anything, just reply to that email.</p></div>
+<main class="wrap"><div class="done"><div class="tick" aria-hidden="true">&#10003;</div><h1 style="font-size:40px;margin:0 0 10px">Thank you!</h1>
+ <p style="color:var(--mut);max-width:480px;margin:0 auto">We have your answers and will email you to confirm a time if you asked for a call. If you change your mind about anything, just reply to that email.</p></div></main>
 {% else %}
-<div id="progress" role="progressbar" aria-label="Form progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i></i></div>
-<p class="meta" aria-live="polite"><span id="where">Welcome</span><span>About 8 minutes &middot; skip any question</span></p>
+<header class="bar" id="bar" hidden><div class="barrow"><button type="button" class="iconbtn" id="backbtn" aria-label="Previous question">&larr;</button>
+ <ol class="acts" id="acts">{% for a in acts %}<li data-act="{{ a[0] }}" data-state="todo"><span class="ring"></span><span class="alabel">{{ a[2] }} {{ a[1] }}</span></li>{% endfor %}</ol></div>
+ <div class="pbar" aria-hidden="true"><span class="pfill" id="pfill"></span></div></header>
 
-<div class="card" id="card">
+<main class="wrap" id="main">
 <div class="draft" id="draftbar" hidden><span>We saved your answers on this device<span id="draftwhen"></span>.</span>
- <span><button type="button" class="btn primary" id="draftgo">Continue where I left off</button> <button type="button" class="link" id="draftno">Start fresh</button></span></div>
+ <span><button type="button" class="btn go" id="draftgo" style="padding:9px 18px">Continue where I left off</button> <button type="button" class="link" id="draftno">Start fresh</button></span></div>
 <form id="rf" method="post" action="{{ url_for('research') }}" novalidate>
  {% if error %}<div class="err" role="alert" id="servererr">{{ error }}</div>{% endif %}
+ <div class="hp" aria-hidden="true"><label>Leave this empty <input name="website" tabindex="-1" autocomplete="off"></label></div>
 
- <section class="step" data-id="intro" data-title="Welcome">
-  <h1>A 20-minute research conversation</h1>
-  <p>We are students working on a strategy project about how developer-focused companies find and act on developer activity (GitHub, docs, community, product sign-ups). The case company for the project is Reo.Dev.</p>
-  <p>It is research, not a sales call. This short form lets you tell us how your team works in your own words, and tell us if you are happy to talk. There are no right answers, and you can skip anything.</p>
-  <p class="mut">We will ask before recording anything. Notes are used in our write-up without your name or company unless you say otherwise.{% if contact %} Questions? Email <a href="mailto:{{ contact }}">{{ contact }}</a>.{% endif %}</p>
-  <div class="nav"><span></span><button type="button" class="btn primary" data-go="next">Start &rarr;</button></div>
+{% for s in screens %}
+ {% if s.type == 'intro' %}
+ <section class="step hero" data-id="intro" data-title="Welcome">
+  <div class="brand"><span class="logo" aria-hidden="true">&#127891;</span>Mesa School of Business &middot; Business Strategy Lab</div>
+  <h1>Got 8 minutes? We would love your take. &#128172;</h1>
+  <p>We are students researching how developer-focused companies find and act on developer activity (GitHub, docs, community, product sign-ups). The project's case company is Reo.Dev, but we are students, not Reo.Dev employees.</p>
+  <p>It is research, not a sales call. Tap through at your own pace, skip anything, and tell us if you are happy to chat.</p>
+  <p class="mut" style="font-size:13px">We will ask before recording anything. Notes are used without your name or company unless you say otherwise.{% if contact %} Questions? <a href="mailto:{{ contact }}">{{ contact }}</a>.{% endif %}</p>
+  <div class="nav" style="justify-content:center"><button type="button" class="btn go big" data-go="next">Let&rsquo;s go &rarr;<span class="enter">press Enter &crarr;</span></button></div>
  </section>
 
- <section class="step" data-id="you" data-title="About you">
-  <div class="qnum">About you</div><h2>First, who are we talking to?</h2><p class="hint">Only your name, email and company are needed.</p>
-  <div class="two"><div><label class="f" for="name">Your name *</label><input id="name" name="name" type="text" maxlength="120" autocomplete="name" value="{{ form.get('name','') }}"><p class="fe">Please tell us your name.</p></div>
-   <div><label class="f" for="email">Work email *</label><input id="email" name="email" type="email" maxlength="200" autocomplete="email" value="{{ form.get('email','') }}"><p class="fe">Please enter a valid email, like name@company.com.</p></div>
-   <div><label class="f" for="company">Company *</label><input id="company" name="company" type="text" maxlength="120" autocomplete="organization" value="{{ form.get('company','') }}"><p class="fe">Please tell us your company.</p></div>
+ {% elif s.type == 'you' %}
+ <section class="step" data-id="you" data-act="about" data-title="About you"><div class="qcard">
+  <div class="kick">&#128075; About you</div><h2>First, who are we talking to?</h2><p class="hint">Only the starred fields are needed.</p>
+  <div class="two"><div><label class="f" for="name">Your name <span class="req">*</span></label><input id="name" name="name" type="text" maxlength="120" autocomplete="name" value="{{ form.get('name','') }}"><p class="fe">Please tell us your name.</p></div>
+   <div><label class="f" for="email">Work email <span class="req">*</span></label><input id="email" name="email" type="email" maxlength="200" autocomplete="email" value="{{ form.get('email','') }}"><p class="fe">Please enter a valid email, like name@company.com.</p></div>
+   <div><label class="f" for="company">Company <span class="req">*</span></label><input id="company" name="company" type="text" maxlength="120" autocomplete="organization" value="{{ form.get('company','') }}"><p class="fe">Please tell us your company.</p></div>
    <div><label class="f" for="role">Your job title</label><input id="role" name="role" type="text" maxlength="120" autocomplete="organization-title" value="{{ form.get('role','') }}"></div></div>
-  <div class="two">{% for g in profile %}<div><label class="f" for="p_{{ g.name }}">{{ g.label }}</label>
-   <select id="p_{{ g.name }}" name="p_{{ g.name }}"><option value="">Choose...</option>{% for o in g.options %}<option {{ 'selected' if form.get('p_' ~ g.name)==o }}>{{ o }}</option>{% endfor %}</select></div>{% endfor %}</div>
-  <div class="glabel" id="crlabel" style="margin-top:18px">Have you used Common Room?</div>
-  <div class="choice" role="radiogroup" aria-labelledby="crlabel">{% for c in cr_statuses %}<label><input type="radio" name="cr_status" value="{{ c }}" {{ 'checked' if form.get('cr_status')==c }}><span>{{ c }}</span></label>{% endfor %}</div>
-  <p class="mut" style="margin-top:8px">The questions adjust to your answer.</p>
-  <div class="nav"><button type="button" class="btn" data-go="back">&larr; Back</button><button type="button" class="btn primary" data-go="next">Next &rarr;</button></div>
- </section>
+  <div class="nav"><span></span><button type="button" class="btn go" data-go="next">Next<span class="enter">Enter &crarr;</span></button></div></div></section>
 
- {% for q in questions %}
- <section class="step q" data-id="{{ q.id }}" data-n="{{ loop.index }}" data-title="Question {{ loop.index }} of {{ questions|length }}">
-  <div class="qnum">Question {{ loop.index }} of {{ questions|length }}</div>
+ {% elif s.type == 'single' %}
+ <section class="step single" data-id="{{ s.id }}" data-act="{{ s.act }}" data-auto="1" data-title="{{ s.label }}" {% if s.only_if %}data-only="{{ s.only_if|join(',') }}"{% endif %}><div class="qcard">
+  <div class="kick">Quick tap</div><h2 id="h-{{ s.id }}">{{ s.label }}</h2>{% if s.note %}<p class="hint">{{ s.note }}</p>{% else %}<p class="hint">Tap one. It moves on by itself.</p>{% endif %}
+  <div class="opts" role="radiogroup" aria-labelledby="h-{{ s.id }}">{% for o in s.options %}<label class="opt"><input type="radio" name="{{ s.name }}" value="{{ o }}" {{ 'checked' if form.get(s.name)==o }}><span class="dot"></span><span class="txt">{{ o }}</span><kbd>{{ loop.index }}</kbd></label>{% endfor %}</div>
+  <div class="nav"><button type="button" class="btn" data-go="back">&larr; Back</button><button type="button" class="link" data-go="skip">Skip</button></div></div></section>
+
+ {% elif s.type == 'question' %}{% set q = s.q %}
+ <section class="step q" data-id="{{ q.id }}" data-act="{{ s.act }}" data-title="{{ q.title }}"><div class="qcard">
+  <div class="kick">Question {{ loop.index0 and (screens|selectattr('type','equalto','question')|list).index(s) + 1 }} of {{ total_q }}</div>
   <h2 class="qt" id="t-{{ q.id }}" data-main="{{ q.title }}" data-alt="{{ q.alt }}">{{ q.title }}</h2>
   {% if q.hint %}<p class="hint">{{ q.hint }}</p>{% endif %}
-  {% for g in q.groups %}
-   <div class="grp" {% if g.only_if %}data-only="{{ g.only_if|join(',') }}"{% endif %}>
-    <div class="glabel" id="l-{{ q.id }}-{{ g.name }}">{{ g.label }}</div>
-    {% if g.kind == 'select' %}
-     <select name="{{ q.id }}_{{ g.name }}" aria-labelledby="l-{{ q.id }}-{{ g.name }}"><option value="">Choose...</option>{% for o in g.options %}<option {{ 'selected' if form.get(q.id ~ '_' ~ g.name)==o }}>{{ o }}</option>{% endfor %}</select>
-    {% else %}
-     <div class="chips" role="group" aria-labelledby="l-{{ q.id }}-{{ g.name }}">{% for o in g.options %}<label class="chip"><input type="checkbox" name="{{ q.id }}_{{ g.name }}" value="{{ o }}" {{ 'checked' if o in form.getlist(q.id ~ '_' ~ g.name) }}><span>{{ o }}</span></label>{% endfor %}</div>
-    {% endif %}
-   </div>
+  {% for g in q.groups if g.kind != 'select' %}
+   <div class="grp"><div class="glabel" id="l-{{ q.id }}-{{ g.name }}">{{ g.label }}</div>
+    <div class="chips" role="group" aria-labelledby="l-{{ q.id }}-{{ g.name }}">{% for o in g.options %}<label class="chip"><input type="checkbox" name="{{ q.id }}_{{ g.name }}" value="{{ o }}" {{ 'checked' if o in form.getlist(q.id ~ '_' ~ g.name) }}><span>{{ o }}</span></label>{% endfor %}</div></div>
   {% endfor %}
   {% if q.referrals %}
-   {% for i in range(1, refs + 1) %}<div class="ref {{ 'later' if i > 1 and not form.get('ref_name_' ~ i) }}" data-ref="{{ i }}">
+   <div class="grp" style="margin-top:14px">{% for i in range(1, refs + 1) %}<div class="ref {{ 'later' if i > 1 and not form.get('ref_name_' ~ i) }}" data-ref="{{ i }}">
     <input type="text" name="ref_name_{{ i }}" maxlength="120" placeholder="Their name" aria-label="Name of person {{ i }}" value="{{ form.get('ref_name_' ~ i,'') }}">
     <input type="text" name="ref_contact_{{ i }}" maxlength="200" placeholder="Email or LinkedIn (optional)" aria-label="How to reach person {{ i }}" value="{{ form.get('ref_contact_' ~ i,'') }}"></div>{% endfor %}
-   <button type="button" class="link" id="addref">+ Add another person</button>
+    <button type="button" class="link" id="addref">+ Add another person</button></div>
   {% else %}
-   <div class="grp"><label class="f" for="a-{{ q.id }}">{{ 'Anything to add?' if q.groups else 'Your answer' }}{% if q.optional_note %} (optional){% endif %}</label>
+   <div class="grp"><label class="f" for="a-{{ q.id }}">{{ 'Anything to add?' if q.groups|selectattr('kind','ne','select')|list else 'Your answer' }}{% if q.optional_note %} (optional){% endif %}</label>
     <textarea id="a-{{ q.id }}" name="{{ q.id }}" maxlength="2000" placeholder="{{ q.placeholder }}">{{ form.get(q.id,'') }}</textarea><div class="count"><span>0</span> / 2000</div></div>
   {% endif %}
   <div class="nav"><button type="button" class="btn" data-go="back">&larr; Back</button>
-   <span><button type="button" class="link" data-go="skip">Skip</button> <button type="button" class="btn primary" data-go="next">Next &rarr;</button></span></div>
-  <p class="kbd js-only" style="display:none"><kbd>Ctrl</kbd> + <kbd>Enter</kbd> for next</p>
- </section>
- {% endfor %}
+   <span><button type="button" class="link" data-go="skip">Skip for now</button> <button type="button" class="btn go" data-go="next">Next<span class="enter">Ctrl + Enter</span></button></span></div></div></section>
 
- <section class="step" data-id="finish" data-title="Review and send">
-  <div class="qnum">Last step</div><h2>Check your answers, then send</h2>
+ {% elif s.type == 'finish' %}
+ <section class="step" data-id="finish" data-act="wrap" data-title="Review and send"><div class="qcard">
+  <div class="kick">&#127873; Last step</div><h2>Check your answers, then send</h2><p class="hint">Tap Edit on anything you want to change.</p>
   <ul class="review" id="review"></ul>
-  <div class="two">{% for g in schedule %}<div><label class="f" for="p_{{ g.name }}">{{ g.label }}</label>
-   <select id="p_{{ g.name }}" name="p_{{ g.name }}"><option value="">Choose...</option>{% for o in g.options %}<option {{ 'selected' if form.get('p_' ~ g.name)==o }}>{{ o }}</option>{% endfor %}</select></div>{% endfor %}</div>
   <label class="f" for="availability">Anything else about timing? (optional)</label>
-  <textarea id="availability" name="availability" maxlength="500" style="min-height:70px" placeholder="e.g. Not the week of the 14th">{{ form.get('availability','') }}</textarea>
-  <label class="chk"><input type="checkbox" name="consent" value="yes" id="consent" {{ 'checked' if form.get('consent')=='yes' }}><span>I am happy to be contacted by email about this research, including scheduling a call. *</span></label>
+  <textarea id="availability" name="availability" maxlength="500" style="min-height:80px" placeholder="e.g. Not the week of the 14th">{{ form.get('availability','') }}</textarea>
+  <label class="chk"><input type="checkbox" name="consent" value="yes" id="consent" {{ 'checked' if form.get('consent')=='yes' }}><span>I am happy to be contacted by email about this research, including scheduling a call. <span class="req">*</span></span></label>
   <p class="fe" id="consenterr">Please tick this so we know you are happy to be contacted.</p>
   <label class="chk"><input type="checkbox" name="quote_ok" value="yes" {{ 'checked' if form.get('quote_ok')=='yes' }}><span>It is fine to quote my answers anonymously in the write-up. (optional)</span></label>
   <div class="err" id="sendErr" role="alert" style="display:none"></div>
-  <div class="hp" aria-hidden="true"><label>Leave this empty <input name="website" tabindex="-1" autocomplete="off"></label></div>
-  <div class="nav" style="display:flex"><button type="button" class="btn js-only" data-go="back" style="display:none">&larr; Back</button><button class="btn primary" type="submit" id="send">Send my answers</button></div>
- </section>
+  <div class="nav" style="display:flex"><button type="button" class="btn js-only" data-go="back" style="display:none">&larr; Back</button><button class="btn go big" type="submit" id="send">Send it &#128640;</button></div></div></section>
+ {% endif %}
+{% endfor %}
 </form>
-</div>
+<p class="credit">Your answers are only used for this research project.</p>
+</main>
 
-<div class="card done" id="thanks" hidden><div class="tick" aria-hidden="true">&#10003;</div><h1>Thank you</h1>
- <p>We have your answers and will email you to confirm a time if you asked for a call. If you change your mind about anything, just reply to that email.</p></div>
+<div id="thanks" hidden><main class="wrap"><div class="done"><div class="tick" aria-hidden="true">&#10003;</div><h1 style="font-size:40px;margin:0 0 10px">Thank you! &#127881;</h1>
+ <p style="color:var(--mut);max-width:480px;margin:0 auto">We have your answers and will email you to confirm a time if you asked for a call. If you change your mind about anything, just reply to that email.</p></div></main></div>
+<canvas id="confetti" aria-hidden="true"></canvas>
 
 <script>
 (function(){
  var form=document.getElementById('rf');if(!form)return;
- var steps=[].slice.call(form.querySelectorAll('.step')),cur=0,KEY='reodev-research-draft-v1';
- var bar=document.querySelector('#progress i'),pg=document.getElementById('progress'),where=document.getElementById('where');
+ var steps=[].slice.call(form.querySelectorAll('.step')),cur=0,KEY='reodev-research-draft-v2',advTimer=null;
+ var bar=document.getElementById('bar'),fill=document.getElementById('pfill'),back=document.getElementById('backbtn'),where=document.title;
+ var acts=[].slice.call(document.querySelectorAll('#acts li')),reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+ [].forEach.call(document.querySelectorAll('.js-only'),function(e){e.style.display=''});
  var status=function(){var r=form.querySelector('input[name=cr_status]:checked');return r?r.value:''};
  var idx=function(id){for(var i=0;i<steps.length;i++)if(steps[i].dataset.id===id)return i;return 0};
- [].forEach.call(document.querySelectorAll('.js-only'),function(e){e.style.display=''});
- function save(){try{var d={step:cur,at:Date.now(),f:{}};[].forEach.call(form.elements,function(e){if(!e.name||e.name==='website'||e.type==='submit')return;
-   if(e.type==='checkbox'||e.type==='radio'){if(e.checked)(d.f[e.name]=d.f[e.name]||[]).push(e.value)}else if(e.value)d.f[e.name]=[e.value]});
-  localStorage.setItem(KEY,JSON.stringify(d))}catch(x){}}
+ function applies(el){var o=el.dataset.only;if(!o)return true;var s=status();if(!s)return true;
+  return o.split(',').indexOf(s==='I use it now'?'now':(s==='I used it before'?'before':''))>-1}
+ function vis(){var a=[];steps.forEach(function(s,i){if(applies(s))a.push(i)});return a}
+ function step(i,d){var j=i+d;while(j>=0&&j<steps.length&&!applies(steps[j]))j+=d;return Math.max(0,Math.min(steps.length-1,j))}
+ function wording(){var s=status(),alt=(s==='I have not used it'||s==='I looked at it');
+  [].forEach.call(form.querySelectorAll('.qt'),function(h){h.textContent=alt?h.dataset.alt:h.dataset.main})}
+ function counts(){[].forEach.call(form.querySelectorAll('textarea[maxlength="2000"]'),function(t){var c=t.parentNode.querySelector('.count span');if(c)c.textContent=t.value.length})}
+ // ---------- draft
+ function save(){try{var d={step:cur,at:Date.now(),f:{}};[].forEach.call(form.elements,function(e){if(!e.name||e.name==='website'||e.type==='submit'||e.type==='button')return;
+   if(e.type==='checkbox'||e.type==='radio'){if(e.checked)(d.f[e.name]=d.f[e.name]||[]).push(e.value)}else if(e.value)d.f[e.name]=[e.value]});localStorage.setItem(KEY,JSON.stringify(d))}catch(x){}}
  var st=null;function later(){clearTimeout(st);st=setTimeout(save,300)}
  function load(){try{var d=JSON.parse(localStorage.getItem(KEY)||'null');return d&&d.f&&Object.keys(d.f).length?d:null}catch(x){return null}}
- function restore(d){[].forEach.call(form.elements,function(e){if(!e.name||!d.f[e.name])return;
-   if(e.type==='checkbox'||e.type==='radio')e.checked=d.f[e.name].indexOf(e.value)>-1;else e.value=d.f[e.name][0]});apply();counts()}
- function apply(){ // wording and visible dropdowns follow "Have you used Common Room?"
-  var s=status(),alt=(s==='I have not used it'||s==='I looked at it'),key=s==='I use it now'?'now':(s==='I used it before'?'before':'');
-  [].forEach.call(form.querySelectorAll('.qt'),function(h){h.textContent=alt?h.dataset.alt:h.dataset.main});
-  [].forEach.call(form.querySelectorAll('.grp[data-only]'),function(g){g.hidden=(s!==''&&g.dataset.only.split(',').indexOf(key)<0)})}
- function counts(){[].forEach.call(form.querySelectorAll('textarea[maxlength="2000"]'),function(t){var c=t.parentNode.querySelector('.count span');if(c)c.textContent=t.value.length})}
- function show(i,back,noHist){
-  cur=Math.max(0,Math.min(steps.length-1,i));
-  steps.forEach(function(s,n){s.classList.remove('active','in-fwd','in-back');if(n===cur){s.classList.add('active');s.classList.add(back?'in-back':'in-fwd')}});
-  var pct=Math.round(cur/(steps.length-1)*100);bar.style.width=pct+'%';pg.setAttribute('aria-valuenow',pct);where.textContent=steps[cur].dataset.title||'';
-  if(steps[cur].dataset.id==='finish')review();
+ function restore(d){[].forEach.call(form.elements,function(e){if(!e.name||!d.f[e.name])return;if(e.type==='checkbox'||e.type==='radio')e.checked=d.f[e.name].indexOf(e.value)>-1;else e.value=d.f[e.name][0]});wording();counts()}
+ // ---------- bar: acts, progress, back
+ function updateBar(){var v=vis(),pos=Math.max(0,v.indexOf(cur)),isIntro=steps[cur].dataset.id==='intro';bar.hidden=isIntro;
+  fill.style.width=isIntro?'0':Math.round(pos/Math.max(1,v.length-1)*100)+'%';back.disabled=(cur===0||steps[cur-1]&&cur===1);
+  var curAct=steps[cur].dataset.act;acts.forEach(function(li){var a=li.dataset.act,ids=v.filter(function(i){return steps[i].dataset.act===a});if(!ids.length){li.style.display='none';return}li.style.display='';
+   var first=ids[0],last=ids[ids.length-1],state=curAct===a?'current':(cur>last?'done':'todo');li.dataset.state=state;li.dataset.first=first;
+   if(state==='current')li.setAttribute('aria-current','step');else li.removeAttribute('aria-current')});
+  document.title=(steps[cur].dataset.title&&!isIntro?steps[cur].dataset.title.slice(0,50)+' | ':'')+where}
+ acts.forEach(function(li){li.addEventListener('click',function(){if(li.dataset.state==='done')go(+li.dataset.first,true)})});
+ // ---------- moving around
+ function go(i,backDir,noHist){clearTimeout(advTimer);cur=i;
+  steps.forEach(function(s,n){s.classList.remove('active','in-fwd','in-back');if(n===cur)s.classList.add('active','in-'+(backDir?'back':'fwd'))});
+  updateBar();if(steps[cur].dataset.id==='finish')review();
   if(!noHist)try{history.pushState({i:cur},'','#'+steps[cur].dataset.id)}catch(x){}
-  var f=steps[cur].querySelector('textarea,input[type=text],input[type=email],select');if(f&&steps[cur].dataset.id!=='intro'&&!/Mobi|Android/i.test(navigator.userAgent))setTimeout(function(){try{f.focus({preventScroll:true})}catch(x){}},60);
-  window.scrollTo({top:0,behavior:'smooth'});save()}
+  var f=steps[cur].querySelector('textarea,input[type=text],input[type=email]');if(f&&!/Mobi|Android/i.test(navigator.userAgent))setTimeout(function(){try{f.focus({preventScroll:true})}catch(x){}},80);
+  window.scrollTo({top:0,behavior:reduce?'auto':'smooth'});save()}
  function bad(el,on){el.classList.toggle('invalid',on)}
- function validateYou(){var n=form.name,e=form.email,c=form.company,ok=true;
-  bad(n,!n.value.trim());bad(c,!c.value.trim());bad(e,!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e.value.trim()));
-  var first=form.querySelector('.invalid');if(first){ok=false;first.focus()}return ok}
- [].forEach.call(['name','email','company'],function(n){form[n].addEventListener('input',function(){bad(form[n],false)})});
- function next(){if(steps[cur].dataset.id==='you'&&!validateYou())return;show(cur+1,false)}
- function back(){show(cur-1,true)}
- form.addEventListener('click',function(e){var b=e.target.closest('[data-go]');if(!b)return;var g=b.dataset.go;g==='next'?next():g==='back'?back():show(cur+1,false)});
- form.addEventListener('keydown',function(e){
-  var t=e.target;if(steps[cur].dataset.id==='finish'&&!(t.tagName==='TEXTAREA'))return;
-  if(e.key==='Enter'&&(t.tagName==='INPUT'&&(t.type==='text'||t.type==='email'))){e.preventDefault();if(steps[cur].dataset.id==='finish')return;
-    var inp=[].slice.call(steps[cur].querySelectorAll('input[type=text],input[type=email]')).filter(function(x){return x.offsetParent});
-    var k=inp.indexOf(t);if(k>-1&&k<inp.length-1)inp[k+1].focus();else next()}
-  if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)&&steps[cur].dataset.id!=='finish'){e.preventDefault();next()}});
+ function validateYou(){var n=form.name,e=form.email,c=form.company;bad(n,!n.value.trim());bad(c,!c.value.trim());bad(e,!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e.value.trim()));
+  var f=form.querySelector('.invalid');if(f){f.focus();return false}return true}
+ ['name','email','company'].forEach(function(n){form[n].addEventListener('input',function(){bad(form[n],false)})});
+ function next(){if(steps[cur].dataset.id==='you'&&!validateYou())return;go(step(cur,1),false)}
+ function prev(){if(cur>0)go(step(cur,-1),true)}
+ form.addEventListener('click',function(e){
+  var b=e.target.closest('[data-go]');if(b){var g=b.dataset.go;g==='next'?next():g==='back'?prev():go(step(cur,1),false);return}
+  var inp=e.target.closest('.single input[type=radio]');if(inp){var lab=inp.closest('.opt');lab.classList.remove('picked');void lab.offsetWidth;lab.classList.add('picked');
+   if(inp.name==='cr_status')wording();clearTimeout(advTimer);var at=cur;advTimer=setTimeout(function(){if(cur===at)go(step(cur,1),false)},reduce?60:420)}});
+ back.addEventListener('click',prev);
+ document.addEventListener('keydown',function(e){
+  if(document.getElementById('rf').offsetParent===null)return;var t=e.target,tag=t.tagName,s=steps[cur],id=s.dataset.id,typing=(tag==='TEXTAREA'||(tag==='INPUT'&&(t.type==='text'||t.type==='email')));
+  if(id==='intro'&&e.key==='Enter'){e.preventDefault();next();return}
+  if(e.key==='Enter'&&e.ctrlKey||e.key==='Enter'&&e.metaKey){if(id!=='finish'){e.preventDefault();next()}return}
+  if(e.key==='Enter'&&tag==='INPUT'&&(t.type==='text'||t.type==='email')&&id!=='finish'){e.preventDefault();
+   var inp=[].slice.call(s.querySelectorAll('input[type=text],input[type=email]')).filter(function(x){return x.offsetParent}),k=inp.indexOf(t);if(k>-1&&k<inp.length-1)inp[k+1].focus();else next();return}
+  if(typing)return;
+  if(s.classList.contains('single')){var opts=[].slice.call(s.querySelectorAll('.opt input'));
+   if(/^[1-9]$/.test(e.key)&&opts[+e.key-1]){e.preventDefault();opts[+e.key-1].click();return}
+   if(e.key==='ArrowDown'||e.key==='ArrowUp'||e.key==='ArrowRight'||e.key==='ArrowLeft'){e.preventDefault();var k=opts.indexOf(document.activeElement),n=(e.key==='ArrowDown'||e.key==='ArrowRight')?k+1:k-1;
+    n=(n+opts.length)%opts.length;opts[n].focus();return}
+   if(e.key==='Enter'&&tag!=='BUTTON'){var on=s.querySelector('.opt input:checked');if(on){e.preventDefault();next()}}}
+  else if(e.key==='Enter'&&tag!=='BUTTON'&&tag!=='A'&&id!=='finish'&&s.classList.contains('q')&&tag!=='INPUT'){e.preventDefault();next()}});
  form.addEventListener('input',function(e){if(e.target.tagName==='TEXTAREA')counts();later()});
- form.addEventListener('change',function(e){if(e.target.name==='cr_status')apply();later()});
+ form.addEventListener('change',function(e){if(e.target.name==='cr_status')wording();updateBar();later()});
  var addref=document.getElementById('addref');
  if(addref)addref.addEventListener('click',function(){var h=form.querySelector('.ref.later');if(h){h.classList.remove('later');h.querySelector('input').focus()}if(!form.querySelector('.ref.later'))addref.style.display='none'});
+ // ---------- review
  function summarize(s){var parts=[],t=s.querySelector('textarea');
+  if(s.classList.contains('single')){var c=s.querySelector('input:checked');if(c)parts.push(c.value);return parts}
   if(t&&t.value.trim())parts.push(t.value.trim().length>150?t.value.trim().slice(0,150)+'...':t.value.trim());
-  [].forEach.call(s.querySelectorAll('.grp:not([hidden])'),function(g){var lab=(g.querySelector('.glabel')||{}).textContent,vals=[];
-   [].forEach.call(g.querySelectorAll('input:checked'),function(c){vals.push(c.value)});var sel=g.querySelector('select');if(sel&&sel.value)vals.push(sel.value);
-   if(vals.length)parts.push(lab+': '+vals.join(', '))});
-  [].forEach.call(s.querySelectorAll('.ref'),function(r){var i=r.querySelectorAll('input');if(i[0].value.trim())parts.push(i[0].value.trim())});
-  return parts}
- function review(){var ul=document.getElementById('review');ul.innerHTML='';
-  steps.forEach(function(s,n){if(!s.classList.contains('q'))return;var h=s.querySelector('.qt'),p=summarize(s),li=document.createElement('li');
-   var d=document.createElement('div'),b=document.createElement('b'),v=document.createElement('span');b.textContent=h.textContent;v.className='v'+(p.length?'':' skip');v.textContent=p.length?p.join(' | '):'Skipped';
-   d.appendChild(b);d.appendChild(v);var e=document.createElement('button');e.type='button';e.className='link';e.textContent=p.length?'Edit':'Answer';e.addEventListener('click',function(){show(n,true)});li.appendChild(d);li.appendChild(e);ul.appendChild(li)})}
- function oops(msg,stepId){var b=document.getElementById('sendErr');b.textContent=msg;b.style.display='block';if(stepId)show(idx(stepId),true);else b.scrollIntoView({block:'center'})}
+  [].forEach.call(s.querySelectorAll('.grp'),function(g){var lab=(g.querySelector('.glabel')||{}).textContent,vals=[];[].forEach.call(g.querySelectorAll('input:checked'),function(c){vals.push(c.value)});if(vals.length&&lab)parts.push(lab+': '+vals.join(', '))});
+  [].forEach.call(s.querySelectorAll('.ref'),function(r){var i=r.querySelectorAll('input');if(i[0].value.trim())parts.push(i[0].value.trim()+(i[1].value.trim()?' ('+i[1].value.trim()+')':''))});return parts}
+ function review(){var ul=document.getElementById('review');ul.innerHTML='';var lastAct='';
+  steps.forEach(function(s,n){if(!s.dataset.act||s.dataset.id==='you'||s.dataset.id==='finish'||!applies(s))return;
+   var act=acts.filter(function(a){return a.dataset.act===s.dataset.act})[0];
+   if(s.dataset.act!==lastAct){lastAct=s.dataset.act;var h=document.createElement('li');h.className='rh';h.textContent=act?act.textContent.trim():'';ul.appendChild(h)}
+   var title=(s.querySelector('h2')||{}).textContent||'',p=summarize(s),li=document.createElement('li');li.className='r';
+   var d=document.createElement('div'),b=document.createElement('b'),v=document.createElement('span');b.textContent=title;v.className='v'+(p.length?'':' skip');v.textContent=p.length?p.join(' | '):'Skipped';d.appendChild(b);d.appendChild(v);
+   var e=document.createElement('button');e.type='button';e.className='link';e.textContent=p.length?'Edit':'Answer';e.addEventListener('click',function(){go(n,true)});li.appendChild(d);li.appendChild(e);ul.appendChild(li)})}
+ // ---------- send
+ function oops(msg,stepId){var b=document.getElementById('sendErr');b.textContent=msg;b.style.display='block';if(stepId)go(idx(stepId),true);else b.scrollIntoView({block:'center'})}
+ function confetti(){if(reduce)return;var c=document.getElementById('confetti'),x=c.getContext('2d'),W=c.width=innerWidth,H=c.height=innerHeight,cols=['#5b5bf0','#ff7a59','#13a463','#f5c542','#e84393'],P=[];
+  for(var i=0;i<140;i++)P.push({x:W/2+(Math.random()-.5)*160,y:H*.42,vx:(Math.random()-.5)*14,vy:-Math.random()*14-4,r:4+Math.random()*5,c:cols[i%5],a:Math.random()*6,va:(Math.random()-.5)*.4});
+  var t0=performance.now();(function f(t){var dt=t-t0;x.clearRect(0,0,W,H);P.forEach(function(p){p.vy+=.38;p.x+=p.vx;p.y+=p.vy;p.a+=p.va;x.save();x.translate(p.x,p.y);x.rotate(p.a);x.globalAlpha=Math.max(0,1-dt/2600);x.fillStyle=p.c;x.fillRect(-p.r,-p.r/2,p.r*2,p.r);x.restore()});
+   if(dt<2700)requestAnimationFrame(f);else x.clearRect(0,0,W,H)})(t0)}
  form.addEventListener('submit',function(e){
-  e.preventDefault();var btn=document.getElementById('send'),c=document.getElementById('consent'),ce=document.getElementById('consenterr');
-  document.getElementById('sendErr').style.display='none';
-  if(!validateYou()){show(idx('you'),true);return}
+  e.preventDefault();var btn=document.getElementById('send'),c=document.getElementById('consent'),ce=document.getElementById('consenterr');document.getElementById('sendErr').style.display='none';
+  if(!validateYou()){go(idx('you'),true);return}
   if(!c.checked){ce.classList.add('show');c.focus();return}ce.classList.remove('show');
-  btn.disabled=true;var old=btn.textContent;btn.innerHTML='<span class="spin"></span>Sending...';
+  btn.disabled=true;var old=btn.innerHTML;btn.innerHTML='<span class="spin"></span>Sending...';
   fetch(form.action,{method:'POST',headers:{'X-Requested-With':'fetch'},body:new FormData(form)})
    .then(function(r){return r.json().catch(function(){return {ok:false,error:'Something unexpected happened. Please try again.'}}).then(function(j){
-     if(j.ok){try{localStorage.removeItem(KEY)}catch(x){}document.getElementById('card').hidden=true;pg.style.display='none';document.querySelector('.meta').style.display='none';document.getElementById('thanks').hidden=false;window.scrollTo({top:0,behavior:'smooth'});return}
-     btn.disabled=false;btn.textContent=old;var m=j.error||'We could not send that. Please try again.';oops(m,/name|company|email/i.test(m)?'you':null)})})
-   .catch(function(){btn.disabled=false;btn.textContent=old;oops('No connection. Your answers are saved on this device, so you can try again in a moment.')})});
- window.addEventListener('popstate',function(e){var i=e.state&&typeof e.state.i==='number'?e.state.i:0;show(i,i<cur,true)});
- // start
- var d=load(),bar2=document.getElementById('draftbar');
- if(d&&!form.name.value){bar2.hidden=false;var mins=Math.round((Date.now()-d.at)/60000);document.getElementById('draftwhen').textContent=mins<1?' just now':mins<60?' '+mins+' minutes ago':' earlier';
-  document.getElementById('draftgo').onclick=function(){restore(d);bar2.hidden=true;show(Math.max(1,Math.min(d.step||1,steps.length-1)),false)};
-  document.getElementById('draftno').onclick=function(){try{localStorage.removeItem(KEY)}catch(x){}bar2.hidden=true}}
- var srv=document.getElementById('servererr');apply();counts();show(srv?idx('you'):0,false,true);try{history.replaceState({i:cur},'','#'+steps[cur].dataset.id)}catch(x){}
+     if(j.ok){try{localStorage.removeItem(KEY)}catch(x){}document.getElementById('main').hidden=true;bar.hidden=true;document.getElementById('thanks').hidden=false;window.scrollTo(0,0);confetti();return}
+     btn.disabled=false;btn.innerHTML=old;var m=j.error||'We could not send that. Please try again.';oops(m,/name|company|email/i.test(m)?'you':null)})})
+   .catch(function(){btn.disabled=false;btn.innerHTML=old;oops('No connection. Your answers are saved on this device, so you can try again in a moment.')})});
+ window.addEventListener('popstate',function(e){var i=e.state&&typeof e.state.i==='number'?e.state.i:0;go(i,i<cur,true)});
+ // ---------- start
+ var d=load(),db=document.getElementById('draftbar');
+ if(d&&!form.name.value){db.hidden=false;var m=Math.round((Date.now()-d.at)/60000);document.getElementById('draftwhen').textContent=m<1?' just now':m<60?' '+m+' minutes ago':' earlier';
+  document.getElementById('draftgo').onclick=function(){restore(d);db.hidden=true;go(Math.max(1,Math.min(d.step||1,steps.length-1)),false)};
+  document.getElementById('draftno').onclick=function(){try{localStorage.removeItem(KEY)}catch(x){}db.hidden=true}}
+ wording();counts();go(document.getElementById('servererr')?idx('you'):0,false,true);try{history.replaceState({i:cur},'','#'+steps[cur].dataset.id)}catch(x){}
 })();
 </script>
 {% endif %}
-</main></body></html>
+</body></html>

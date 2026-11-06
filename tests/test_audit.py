@@ -174,7 +174,7 @@ def test_filters_combine_and_sorting_orders(client):
     assert order("company") == sorted(order("company"))
     assert order("score") == sorted(order("score"))                         # score falls as the number rises, so ascending numbers
     page = client.get("/list?sort=bogus").get_data(as_text=True)
-    assert "Best match first" in page                                       # an invalid sort falls back safely
+    assert re.search(r"<option value=\"interview\" selected>", page)         # an invalid sort falls back to the default safely
 
 
 def test_pagination_pages_and_bounds(client):

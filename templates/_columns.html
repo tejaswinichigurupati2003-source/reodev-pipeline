@@ -3,10 +3,11 @@
    <div class="ch"><div><b style="color:var(--h{{ i }})">{{ s }}</b><span class="cnt"><span class="count">{{ n }}</span> leads</span></div>
     <span class="r" style="color:var(--h{{ i }})">{{ cols[s]|selectattr('email')|list|length }} <span class="cnt">with email</span></span></div>
    <div class="cards">
-   {% if not cols[s] %}<div class="who empty" style="padding:6px 8px">{% if total == 0 and (tier or only_email or q) %}Nothing matches the filters.{% else %}Nothing here yet. Drag a card in.{% endif %}</div>{% endif %}
+   {% if not cols[s] %}<div class="who empty" style="padding:6px 8px">{% if total == 0 and (tier or only_email or q or fit) %}Nothing matches the filters.{% else %}Nothing here yet. Drag a card in.{% endif %}</div>{% endif %}
    {% for l in cols[s][:cap] %}
     <div class="card" draggable="true" data-key="{{ l.key }}">
      <div class="ct"><b><a class="co-link" href="{{ url_for('lead', key=l.key) }}">{{ l.company }}</a></b><span class="tag t-{{ l.tier }}">{{ 'Added by you' if l.tier=='MY' else 'Tier ' ~ l.tier }}</span></div>
+     {% if l.contact_name or l.email %}<div class="rolefit rf-{{ l.role_score }}" title="{{ l.role_reason }}">{{ l.role_label }}</div>{% endif %}
      <div class="who">{% if l.contact_name %}{{ l.contact_name }}{% if l.contact_title %} &middot; {{ l.contact_title }}{% endif %}{% else %}No contact yet &middot; {{ l.domain }}{% endif %}</div>
      <div class="big"><b>{{ l.score if l.score is not none else '—' }}</b><span>{{ 'fit score' if l.score is not none else 'manual' }}</span></div>
      <div class="bar"><i style="width:{{ [l.score or 0, 100]|min }}%"></i></div>
@@ -18,7 +19,7 @@
       {% if l.manual %}<form method="post" action="{{ url_for('contacts_delete') }}" onsubmit="return confirm('Remove this contact?')"><input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="key" value="{{ l.key }}"><button class="x" title="Remove">&times;</button></form>{% endif %}</div>
     </div>
    {% endfor %}
-   {% if n > cap %}<a class="morelink" href="{{ url_for('index', status=s, tier=tier, email='1' if only_email else None, q=q or None) }}">Show all {{ n }} in the list view &rarr;</a>{% endif %}</div>
+   {% if n > cap %}<a class="morelink" href="{{ url_for('index', status=s, tier=tier, email='1' if only_email else None, q=q or None, fit=fit) }}">Show all {{ n }} in the list view &rarr;</a>{% endif %}</div>
    <button class="add" style="color:var(--h{{ i }})" data-add="{{ s }}">+ Add contact</button>
   </section>
 {% endfor %}

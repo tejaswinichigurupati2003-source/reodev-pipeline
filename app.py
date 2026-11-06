@@ -110,7 +110,16 @@ def _nav():
         return {}
 
 
+def _best_count():
+    """How many leads are DevRel, community, developer-marketing or growth people (only known once the leads are loaded)."""
+    try:
+        return sum(1 for l in g.everyone if not l["archived"] and l["role_score"] >= 3) if hasattr(g, "everyone") else ""
+    except Exception:
+        return ""
+
+
 app.jinja_env.globals["nav"] = _nav
+app.jinja_env.globals["best_count"] = _best_count
 app.jinja_env.globals["flashes"] = lambda: get_flashed_messages(with_categories=True)
 
 
@@ -193,13 +202,14 @@ def _filters():
     """The filters in the address bar, validated. Returns (dict for filtering, dict of non-empty values for building links)."""
     tier = request.args.get("tier") if request.args.get("tier") in TIERS else None
     status = request.args.get("status") if request.args.get("status") in db.STATUSES else None
-    sort = request.args.get("sort") if request.args.get("sort") in db.SORTS else "rank"
+    sort = request.args.get("sort") if request.args.get("sort") in db.SORTS else "interview"
+    fit = request.args.get("fit") if request.args.get("fit") in ("best", "hide") else None
     search = (request.args.get("q") or "").strip()[:80]
     only_email = request.args.get("email") == "1"
     archived = request.args.get("archived") == "1"
-    f = dict(tier=tier, search=search or None, only_email=only_email, status=status, archived=archived, sort=sort)
+    f = dict(tier=tier, search=search or None, only_email=only_email, status=status, archived=archived, sort=sort, fit=fit)
     keep = {k: v for k, v in {"tier": tier, "status": status, "q": search or None, "email": "1" if only_email else None,
-                              "archived": "1" if archived else None, "sort": sort if sort != "rank" else None}.items() if v}
+                              "archived": "1" if archived else None, "fit": fit, "sort": sort if sort != "interview" else None}.items() if v}
     return f, keep
 
 
@@ -222,7 +232,7 @@ def index():
     template = "_results.html" if request.headers.get("X-Requested-With") == "fetch" else "index.html"
     return render_template(template, leads=rows[(page - 1) * PAGE_SIZE: page * PAGE_SIZE], total=len(rows), page=page, pages=pages,
                            keep=keep, base={k: v for k, v in keep.items() if k != "tier"}, tier=f["tier"], q=f["search"] or "", counts=counts, statuses=db.STATUSES, only_email=f["only_email"],
-                           status=f["status"], sort=f["sort"], sorts=db.SORTS, archived=f["archived"], stats=stats,
+                           status=f["status"], sort=f["sort"], sorts=db.SORTS, archived=f["archived"], stats=stats, fit=f["fit"],
                            stage_counts=stage_counts, archived_count=sum(1 for l in _everyone() if l["archived"]))
 
 
@@ -230,7 +240,7 @@ def index():
 def board():
     f, keep = _filters()
     f["status"] = None  # the board shows every stage; a stage filter makes no sense here
-    f["sort"] = "rank"
+    f["sort"] = "interview"
     leads = db.filter_leads(_everyone(), **f)
     now = datetime.now(timezone.utc)
     cols = {s: [] for s in db.STATUSES}
@@ -242,11 +252,11 @@ def board():
         cols[l["contact_status"]].append(l)
     if request.headers.get("X-Requested-With") == "fetch":
         resp = app.make_response(render_template("_columns.html", cols=cols, statuses=db.STATUSES, tier=f["tier"], only_email=f["only_email"],
-                                                 q=f["search"] or "", cap=BOARD_CAP, total=len(leads)))
+                                                 q=f["search"] or "", cap=BOARD_CAP, total=len(leads), fit=f["fit"]))
         resp.headers["X-Total-Count"] = str(len(leads))
         return resp
     return render_template("board.html", cols=cols, statuses=db.STATUSES, tier=f["tier"], only_email=f["only_email"], q=f["search"] or "",
-                           archived=f["archived"], total=len(leads), cap=BOARD_CAP)
+                           archived=f["archived"], total=len(leads), cap=BOARD_CAP, fit=f["fit"])
 
 
 @app.route("/lead")
@@ -369,8 +379,8 @@ def interview_guide():
 
 
 def _research_context(form, error=None, thanks=False):
-    return dict(form=form, error=error, thanks=thanks, questions=research_form.QUESTIONS, profile=research_form.PROFILE,
-                schedule=research_form.SCHEDULE, cr_statuses=db.CR_STATUSES, refs=research_form.REFERRALS, opt_out=research_form.OPT_OUT,
+    return dict(form=form, error=error, thanks=thanks, screens=research_form.build_screens(), acts=research_form.ACTS,
+                refs=research_form.REFERRALS, opt_out=research_form.OPT_OUT, total_q=len(research_form.QUESTIONS),
                 contact=os.getenv("RESEARCH_CONTACT_EMAIL") or "")
 
 

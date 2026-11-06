@@ -53,6 +53,7 @@ dl{display:grid;grid-template-columns:130px 1fr;gap:6px 12px;margin:0}dt{color:v
  <dl><dt>Type</dt><dd>{{ l.company_type or 'unknown' }}{% if l.headcount %} &middot; headcount {{ l.headcount }}{% endif %}</dd>
   {% if l.score is not none %}<dt>Score</dt><dd>fit {{ l.fit }}, value {{ l.value }}, switching proxy {{ l.switching_proxy }}, ease {{ l.ease }}. The switching score is a proxy, not a forecast.</dd>{% endif %}
   <dt>Found how</dt><dd>{{ l.how_identified }}{% if l.source_url|safe_url %} &middot; <a href="{{ l.source_url|safe_url }}" target="_blank" rel="noopener noreferrer">source</a>{% endif %}</dd>
+  <dt>Interview fit</dt><dd><span class="rolefit rf-{{ l.role_score }}">{{ l.role_label }}</span> {{ l.role_reason }}</dd>
   <dt>Role group</dt><dd>{{ l.persona or 'not set' }}</dd>
   <dt>Signals</dt><dd>{{ l.devrel_evidence or 'No verified developer-community signals.' }}</dd>
   {% if l.email %}<dt>Email source</dt><dd>{{ l.contact_source or 'entered by you' }}{% if l.email_confidence %} &middot; confidence {{ l.email_confidence }}{% endif %}. Treat it as unverified until you check it.</dd>{% endif %}</dl></div>
