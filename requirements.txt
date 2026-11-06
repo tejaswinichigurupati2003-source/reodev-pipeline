@@ -1,0 +1,6 @@
+flask
+psycopg[binary]
+requests
+beautifulsoup4
+lxml
+python-dotenv

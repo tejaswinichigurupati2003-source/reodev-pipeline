@@ -1,0 +1,8 @@
+data/
+tests/
+.env
+.pytest_cache/
+steps/
+scrapers/
+discover.py
+pipeline.py

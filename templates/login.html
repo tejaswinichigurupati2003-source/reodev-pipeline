@@ -1,0 +1,9 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sign in</title>
+<style>body{font:16px system-ui;display:grid;place-items:center;min-height:100vh;margin:0;background:#f6f6f4;color:#222}
+form{background:#fff;padding:28px;border-radius:12px;box-shadow:0 1px 6px #0002;display:grid;gap:12px;width:min(320px,90vw)}
+input,button{font:inherit;padding:10px;border-radius:8px;border:1px solid #bbb}button{background:#222;color:#fff;cursor:pointer}
+.err{color:#b00020;font-size:14px}</style></head><body>
+<form method="post"><strong>Reo.Dev lead tracker</strong>
+{% if error %}<div class="err">{{ error }}</div>{% endif %}
+<input type="password" name="password" placeholder="Password" autofocus required><button>Sign in</button></form></body></html>
