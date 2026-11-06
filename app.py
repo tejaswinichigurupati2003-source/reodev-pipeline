@@ -22,6 +22,7 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 
 import db
 import interview
+import research_form
 
 load_dotenv()
 
@@ -367,26 +368,35 @@ def interview_guide():
     return render_template("guide.html", g=guide, lead=lead, subject=subject, body=body, linkedin=linkedin)
 
 
+def _research_context(form, error=None, thanks=False):
+    return dict(form=form, error=error, thanks=thanks, questions=research_form.QUESTIONS, profile=research_form.PROFILE,
+                schedule=research_form.SCHEDULE, cr_statuses=db.CR_STATUSES, refs=research_form.REFERRALS, opt_out=research_form.OPT_OUT,
+                contact=os.getenv("RESEARCH_CONTACT_EMAIL") or "")
+
+
 @app.route("/research", methods=["GET", "POST"])
 def research():
-    """Public form we send to the people we want to interview. No sign-in, no cookies needed."""
-    values, error = {}, None
-    if request.method == "POST":
-        values = request.form.to_dict()
-        if values.get("website"):  # hidden field: only bots fill it. Pretend it worked.
-            return redirect(url_for("research_thanks"))
-        try:
-            db.add_response(values, now_iso())
-            return redirect(url_for("research_thanks"))
-        except ValueError as exc:
-            error = str(exc)
-    return render_template("research.html", values=values, error=error, cr_statuses=db.CR_STATUSES,
-                           contact=os.getenv("RESEARCH_CONTACT_EMAIL") or ""), (400 if error else 200)
+    """Public, interactive form we send to the people we want to interview. No sign-in. Works without JavaScript too."""
+    from werkzeug.datastructures import ImmutableMultiDict
+    if request.method == "GET":
+        return render_template("research.html", **_research_context(ImmutableMultiDict()))
+    form, error = request.form, None
+    if form.get("website"):  # hidden field: only bots fill it. Pretend it worked.
+        return jsonify({"ok": True}) if _wants_json() else redirect(url_for("research_thanks"))
+    try:
+        db.add_response(form, now_iso())
+        return jsonify({"ok": True}) if _wants_json() else redirect(url_for("research_thanks"))
+    except ValueError as exc:
+        error = str(exc)
+    if _wants_json():
+        return jsonify({"ok": False, "error": error}), 400
+    return render_template("research.html", **_research_context(form, error)), 400
 
 
 @app.route("/research/thanks")
 def research_thanks():
-    return render_template("research.html", thanks=True, values={}, error=None, cr_statuses=[], contact=os.getenv("RESEARCH_CONTACT_EMAIL") or "")
+    from werkzeug.datastructures import ImmutableMultiDict
+    return render_template("research.html", **_research_context(ImmutableMultiDict(), thanks=True))
 
 
 def _responses_allowed():
@@ -410,7 +420,11 @@ def responses():
         return render_template("responses_locked.html", wrong=bool(request.args.get("key"))), (403 if request.args.get("key") else 200)
     if request.args.get("key"):
         return redirect(url_for("responses"))  # drop the key from the address bar
-    return render_template("responses.html", rows=db.list_responses())
+    rows = db.list_responses()
+    for r in rows:
+        parsed = research_form.loads(r.get("answers"))
+        r["qa"], r["profile"], r["quote_ok"] = research_form.qa_list(parsed), research_form.profile_list(parsed), bool(parsed.get("quote_ok"))
+    return render_template("responses.html", rows=rows)
 
 
 def _csv(rows, cols, filename):
@@ -431,8 +445,12 @@ def _csv(rows, cols, filename):
 def responses_csv():
     if not _responses_allowed():
         abort(404)
-    return _csv(db.list_responses(), ["created_at", "name", "email", "company", "role", "cr_status", "tools", "availability"],
-                "research-responses.csv")
+    rows = db.list_responses()
+    for r in rows:
+        r.update(research_form.flatten(research_form.loads(r.get("answers"))))
+    cols = (["created_at", "name", "email", "company", "role", "cr_status", "availability"]
+            + [f"p_{g['name']}" for g in research_form.FIELD_GROUPS] + [q["id"] for q in research_form.QUESTIONS] + ["quote_ok"])
+    return _csv(rows, cols, "research-responses.csv")
 
 
 @app.route("/export.csv")

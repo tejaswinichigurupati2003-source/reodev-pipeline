@@ -17,6 +17,7 @@ from dotenv import load_dotenv
 
 import export
 import pipeline_io as io
+import research_form
 
 load_dotenv()
 
@@ -121,6 +122,14 @@ class _DB:
         return [dict(r) for r in self.execute(sql, params).fetchall()]
 
 
+def _ensure_column(db, table, column, ctype):
+    """Add a column to an existing table if it is missing. Never touches existing rows."""
+    if db.pg:
+        db.execute(f"ALTER TABLE {table} ADD COLUMN IF NOT EXISTS {column} {ctype}")
+    elif column not in [r["name"] for r in db.rows(f"PRAGMA table_info({table})")]:
+        db.execute(f"ALTER TABLE {table} ADD COLUMN {column} {ctype}")
+
+
 def init(db, force=False):
     """Create the tables once per process (checking on every request costs a round trip per table)."""
     ident = "pg" if db.pg else str(io.DATA_DIR / "local.db")
@@ -131,7 +140,8 @@ def init(db, force=False):
     db.execute("CREATE TABLE IF NOT EXISTS manual_leads (key TEXT PRIMARY KEY, company TEXT, domain TEXT, contact_name TEXT, "
                "contact_title TEXT, email TEXT, created_at TEXT)")
     db.execute("CREATE TABLE IF NOT EXISTS research_responses (id TEXT PRIMARY KEY, created_at TEXT, name TEXT, email TEXT, company TEXT, "
-               "role TEXT, cr_status TEXT, tools TEXT, availability TEXT, consent TEXT)")
+               "role TEXT, cr_status TEXT, tools TEXT, availability TEXT, consent TEXT, answers TEXT)")
+    _ensure_column(db, "research_responses", "answers", "TEXT")  # tables created before the question form existed
     db.execute("CREATE TABLE IF NOT EXISTS lead_edits (key TEXT PRIMARY KEY, contact_name TEXT, contact_title TEXT, email TEXT, "
                "linkedin TEXT, edited TEXT, archived TEXT, updated_at TEXT)")
     db.execute("CREATE TABLE IF NOT EXISTS tracker (key TEXT PRIMARY KEY, contact_status TEXT, channel TEXT, last_touch TEXT, "
@@ -441,10 +451,10 @@ def add_response(f, now):
         if db.rows("SELECT id FROM research_responses WHERE LOWER(email) = ? AND created_at > ?", [clean["email"].lower(), day_ago]):
             return None  # same person sent it twice: say thanks, store once
         rid = uuid.uuid4().hex[:12]
-        db.execute("INSERT INTO research_responses (id, created_at, name, email, company, role, cr_status, tools, availability, consent) "
-                   "VALUES (?,?,?,?,?,?,?,?,?,?)",
+        db.execute("INSERT INTO research_responses (id, created_at, name, email, company, role, cr_status, tools, availability, consent, answers) "
+                   "VALUES (?,?,?,?,?,?,?,?,?,?,?)",
                    [rid, now, clean["name"], clean["email"], clean["company"], clean["role"], clean["cr_status"], clean["tools"],
-                    clean["availability"], "yes"])
+                    clean["availability"], "yes", research_form.dumps(research_form.parse(f))])
     return rid
 
 

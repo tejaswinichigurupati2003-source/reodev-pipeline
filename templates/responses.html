@@ -2,13 +2,35 @@
 {% set active = 'responses' %}
 {% block title %}Research responses{% endblock %}
 {% block crumb %}Form responses{% endblock %}
+{% block css %}
+.resp{background:var(--card);border-radius:16px;margin-bottom:10px;box-shadow:0 1px 2px #0000000d}
+.resp>summary{list-style:none;cursor:pointer;padding:14px 16px;display:grid;grid-template-columns:minmax(140px,1.2fr) minmax(160px,1.4fr) minmax(120px,1fr) 150px;gap:6px 12px;align-items:center}
+.resp>summary::-webkit-details-marker{display:none}.resp>summary:hover{background:var(--s0);border-radius:16px}
+.resp[open]>summary{border-bottom:1px solid var(--line);border-radius:16px 16px 0 0}
+.body{padding:6px 18px 16px}.q{margin:14px 0}.q b{display:block;margin-bottom:3px}.q p{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
+.chip2{display:inline-block;background:var(--s4);color:var(--h4);border-radius:99px;padding:2px 10px;font-size:12px;margin:2px 4px 2px 0}
+.prof{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+@media(max-width:860px){.resp>summary{grid-template-columns:1fr 1fr}}
+{% endblock %}
 {% block content %}
 <div class="head"><div><h1>Research form responses</h1>
  <div class="sub">{{ rows|length }} so far. These are people's personal details: keep this page private and delete what you no longer need.</div></div>
  <div class="noprint"><a class="pill" href="{{ url_for('research') }}" target="_blank" rel="noopener">Open the form</a>
- <a class="pill dark" href="{{ url_for('responses_csv') }}">Download CSV</a></div></div>
-<div class="panel" style="overflow-x:auto">
-{% if rows %}<table><tr><th>When (UTC)</th><th>Name</th><th>Email</th><th>Company</th><th>Role</th><th>Common Room</th><th>Tools</th><th>Availability</th></tr>
-{% for r in rows %}<tr><td>{{ r.created_at }}</td><td>{{ r.name }}</td><td>{{ r.email }}</td><td>{{ r.company }}</td><td>{{ r.role }}</td><td>{{ r.cr_status }}</td><td>{{ r.tools }}</td><td>{{ r.availability }}</td></tr>{% endfor %}</table>
-{% else %}<p>No replies yet. Send people the form link: <a href="{{ url_for('research', _external=True) }}">{{ url_for('research', _external=True) }}</a></p>{% endif %}</div>
+ <a class="pill dark" href="{{ url_for('responses_csv') }}">Download CSV with all answers</a></div></div>
+{% for r in rows %}
+<details class="resp"><summary><span><b>{{ r.name }}</b><br><span class="mut">{{ r.role or 'no title given' }}</span></span>
+ <span>{{ r.company }}<br><span class="mut">{{ r.email }}</span></span>
+ <span class="mut">{{ r.cr_status or 'Common Room: not said' }}<br>{{ r.qa|length }} answer{{ '' if r.qa|length==1 else 's' }}</span>
+ <span class="mut">{{ r.created_at[:16]|replace('T',' ') }} UTC</span></summary>
+ <div class="body">
+  {% if r.profile %}<div class="prof">{% for label, v in r.profile %}<span class="chip2" title="{{ label }}">{{ v }}</span>{% endfor %}</div>{% endif %}
+  {% for a in r.qa %}<div class="q"><b>{{ a.title }}</b>
+   {% if a.text %}<p>{{ a.text }}</p>{% endif %}
+   {% for label, chips in a.groups %}<div><span class="mut">{{ label }}:</span> {% for c in chips %}<span class="chip2">{{ c }}</span>{% endfor %}</div>{% endfor %}
+   {% for ref in a.referrals %}<p>&rarr; {{ ref.name }}{% if ref.contact %} ({{ ref.contact }}){% endif %}</p>{% endfor %}</div>
+  {% else %}<p class="mut">No written answers: they only asked to be contacted.</p>{% endfor %}
+  {% if r.availability %}<div class="q"><b>Timing</b><p>{{ r.availability }}</p></div>{% endif %}
+  <p class="mut">{{ 'OK to quote anonymously.' if r.quote_ok else 'Did not agree to be quoted. Do not quote them.' }}</p>
+ </div></details>
+{% else %}<div class="panel">No replies yet. Send people the form link: <a href="{{ url_for('research', _external=True) }}">{{ url_for('research', _external=True) }}</a></div>{% endfor %}
 {% endblock %}

@@ -1,31 +1,223 @@
-{% extends "simple.html" %}
-{% block title %}Research conversation{% endblock %}
-{% block body %}
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>A short research conversation</title>
+<script>document.documentElement.className='js'</script>
+<style>
+:root{--bg:#f1f3f6;--bg2:#f4f1e6;--fg:#171715;--mut:#6f6f69;--card:#fff;--line:#e3e3de;--dark:#161614;--acc:#2f5bea;--accbg:#e8edfc;--ok:#1b7f4d;--okbg:#e6f4ea;--warn:#a2362b;--warnbg:#fdeceb}
+@media(prefers-color-scheme:dark){:root{--bg:#101113;--bg2:#15160f;--fg:#efefe9;--mut:#a0a09a;--card:#232321;--line:#3a3a37;--dark:#efefe9;--acc:#8aa6ff;--accbg:#1b2338;--ok:#6fdc9c;--okbg:#172a1f;--warn:#ff9d93;--warnbg:#33201f}}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;color:var(--fg);background:linear-gradient(160deg,var(--bg),var(--bg2));background-attachment:fixed;font:16px/1.55 system-ui,-apple-system,Segoe UI,sans-serif}
+.wrap{max-width:720px;margin:0 auto;padding:18px 16px 70px}
+.top{display:flex;align-items:center;gap:12px;margin:6px 0 14px}.logo{width:38px;height:38px;border-radius:11px;background:var(--dark);color:var(--bg);display:grid;place-items:center;font-weight:800}
+.mut{color:var(--mut);font-size:14px}
+#progress{height:6px;border-radius:9px;background:var(--line);overflow:hidden;display:none}.js #progress{display:block}
+#progress i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--acc),var(--ok));border-radius:9px;transition:width .35s ease}
+.meta{display:none;justify-content:space-between;gap:10px;margin:8px 2px 14px;font-size:13px;color:var(--mut)}.js .meta{display:flex}
+.card{background:var(--card);border-radius:22px;padding:26px;box-shadow:0 1px 2px #0000000d,0 12px 36px #00000012}
+.step{margin-bottom:18px}.js .step{display:none;margin:0}.js .step.active{display:block}
+.step.in-fwd{animation:fwd .32s ease}.step.in-back{animation:back .32s ease}
+@keyframes fwd{from{opacity:0;transform:translateX(22px)}to{opacity:1;transform:none}}@keyframes back{from{opacity:0;transform:translateX(-22px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+h1{font-size:30px;line-height:1.15;margin:0 0 8px;letter-spacing:-.02em}h2{font-size:22px;line-height:1.3;margin:0 0 6px;letter-spacing:-.01em}
+.qnum{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--acc);font-weight:700;margin-bottom:6px}
+.hint{color:var(--mut);margin:0 0 14px;font-size:15px}
+label.f,.glabel{display:block;font-size:13px;font-weight:600;color:var(--mut);margin:14px 0 5px}
+input[type=text],input[type=email],textarea,select{width:100%;font:inherit;color:inherit;background:var(--bg);border:1.5px solid var(--line);border-radius:12px;padding:11px 13px;transition:border-color .15s,box-shadow .15s}
+textarea{min-height:130px;resize:vertical}select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--mut) 50%),linear-gradient(135deg,var(--mut) 50%,transparent 50%);background-position:calc(100% - 20px) 50%,calc(100% - 14px) 50%;background-size:6px 6px;background-repeat:no-repeat;padding-right:36px;cursor:pointer}
+input:focus,textarea:focus,select:focus{outline:none;border-color:var(--acc);box-shadow:0 0 0 4px var(--accbg)}
+.invalid{border-color:var(--warn)!important;box-shadow:0 0 0 4px var(--warnbg)!important}.fe{color:var(--warn);font-size:13px;margin:4px 0 0;display:none}.invalid+.fe,.fe.show{display:block}
+.count{text-align:right;font-size:12px;color:var(--mut);margin-top:3px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}.chip{position:relative;cursor:pointer}
+.chip input{position:absolute;opacity:0;inset:0;cursor:pointer;width:100%;height:100%;margin:0}
+.chip span{display:inline-block;padding:7px 14px;border:1.5px solid var(--line);border-radius:99px;font-size:14px;background:var(--bg);transition:all .15s;user-select:none}
+.chip:hover span{border-color:var(--acc)}.chip input:checked+span{background:var(--accbg);border-color:var(--acc);color:var(--acc);font-weight:600}.chip input:checked+span:before{content:"\2713\00a0"}
+.chip input:focus-visible+span{outline:2px solid var(--acc);outline-offset:2px}
+.grp{margin:14px 0}.grp[hidden]{display:none}
+.choice{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+.choice label{position:relative;cursor:pointer}.choice input{position:absolute;opacity:0;inset:0;width:100%;height:100%;margin:0;cursor:pointer}
+.choice span{display:block;text-align:center;padding:12px 10px;border:1.5px solid var(--line);border-radius:14px;background:var(--bg);font-size:14px;transition:all .15s}
+.choice label:hover span{border-color:var(--acc)}.choice input:checked+span{background:var(--accbg);border-color:var(--acc);color:var(--acc);font-weight:600}.choice input:focus-visible+span{outline:2px solid var(--acc);outline-offset:2px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}@media(max-width:560px){.two{grid-template-columns:1fr}}
+.nav{display:none;justify-content:space-between;align-items:center;gap:10px;margin-top:22px}.js .nav{display:flex}
+.btn{font:inherit;border:1.5px solid var(--line);background:var(--card);color:var(--fg);border-radius:99px;padding:11px 22px;cursor:pointer;transition:all .15s}
+.btn:hover:not(:disabled){border-color:var(--acc);transform:translateY(-1px)}.btn:active:not(:disabled){transform:none}.btn:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.btn.primary{background:var(--dark);color:var(--bg);border-color:var(--dark);font-weight:600}.btn:disabled{opacity:.6;cursor:progress}
+.link{background:none;border:0;color:var(--mut);cursor:pointer;font:inherit;text-decoration:underline;padding:8px}.link:hover{color:var(--acc)}
+.kbd{font-size:12px;color:var(--mut);margin-top:10px}kbd{border:1px solid var(--line);border-radius:6px;padding:1px 6px;font:inherit;font-size:11px;background:var(--bg)}
+.err{background:var(--warnbg);color:var(--warn);border-radius:12px;padding:11px 14px;margin:0 0 14px}
+.draft{background:var(--accbg);border-radius:14px;padding:12px 14px;margin-bottom:14px;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;justify-content:space-between}
+.draft[hidden]{display:none}
+.review{list-style:none;padding:0;margin:0 0 6px}.review li{display:flex;gap:12px;justify-content:space-between;align-items:flex-start;padding:11px 0;border-bottom:1px solid var(--line)}
+.review b{display:block;font-size:14px}.review span.v{color:var(--mut);font-size:14px;overflow-wrap:anywhere}.review .skip{font-style:italic}
+.chk{display:flex;gap:10px;align-items:flex-start;font-size:15px;margin:12px 0;cursor:pointer}.chk input{margin-top:5px;width:18px;height:18px;flex:none}
+.ref{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}@media(max-width:560px){.ref{grid-template-columns:1fr}}.js .ref.later{display:none}
+.hp{position:absolute;left:-9999px;height:0;overflow:hidden}
+.done{text-align:center;padding:14px 4px}.done .tick{width:72px;height:72px;border-radius:50%;background:var(--okbg);color:var(--ok);display:grid;place-items:center;margin:0 auto 14px;font-size:36px;animation:pop .45s ease}
+@keyframes pop{0%{transform:scale(.4);opacity:0}70%{transform:scale(1.1)}100%{transform:scale(1);opacity:1}}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px;margin-right:6px}@keyframes sp{to{transform:rotate(360deg)}}
+</style></head><body><main class="wrap">
+<header class="top"><span class="logo" aria-hidden="true">R</span><div><b>Research conversation</b><div class="mut">Mesa School of Business, Business Strategy Lab</div></div></header>
+
 {% if thanks %}
-<div class="card"><h1>Thank you</h1><p>We have your details and will email you shortly to confirm a time. If you change your mind, just reply to that email.</p></div>
+<div class="card done"><div class="tick" aria-hidden="true">&#10003;</div><h1>Thank you</h1>
+ <p>We have your answers and will email you to confirm a time if you asked for a call. If you change your mind about anything, just reply to that email.</p></div>
 {% else %}
-<h1>A 20-minute research conversation</h1>
-<p class="mut">Mesa School of Business, Business Strategy Lab</p>
-<div class="card">
- <h2>Who we are and why we are asking</h2>
- <p>We are students working on a strategy project about how developer-focused companies find and act on developer activity (GitHub, docs, community, product sign-ups). The case company for the project is Reo.Dev.</p>
- <p>We would like to learn from people who do this work. It is research, not a sales call: we will ask about your tools, your process and what would make you change either. There are no right answers.</p>
- <p class="mut">We will ask before recording anything. Notes are used in our write-up without your name or company unless you say otherwise.{% if contact %} Questions? Email <a href="mailto:{{ contact }}">{{ contact }}</a>.{% endif %}</p>
-</div>
-<form method="post" class="card" novalidate>
- <h2>Your details</h2>
- {% if error %}<div class="err" role="alert">{{ error }}</div>{% endif %}
- <label for="name">Your name *</label><input id="name" name="name" required maxlength="120" autocomplete="name" value="{{ values.get('name','') }}">
- <label for="email">Work email *</label><input id="email" name="email" type="email" required maxlength="200" autocomplete="email" value="{{ values.get('email','') }}">
- <label for="company">Company *</label><input id="company" name="company" required maxlength="120" autocomplete="organization" value="{{ values.get('company','') }}">
- <label for="role">Your role</label><input id="role" name="role" maxlength="120" autocomplete="organization-title" value="{{ values.get('role','') }}">
- <label for="cr">Have you used Common Room?</label>
- <select id="cr" name="cr_status"><option value="">Prefer not to say</option>{% for c in cr_statuses %}<option {{ 'selected' if values.get('cr_status')==c }}>{{ c }}</option>{% endfor %}</select>
- <label for="tools">Which tools do you use to track developer or community activity? (optional)</label><textarea id="tools" name="tools" maxlength="500">{{ values.get('tools','') }}</textarea>
- <label for="av">Days and times that suit you, with your time zone</label><textarea id="av" name="availability" maxlength="500" placeholder="e.g. Tue or Thu afternoons, India time">{{ values.get('availability','') }}</textarea>
- <div class="hp" aria-hidden="true"><label>Leave this empty <input name="website" tabindex="-1" autocomplete="off"></label></div>
- <label class="chk"><input type="checkbox" name="consent" value="yes" {{ 'checked' if values.get('consent')=='yes' }}> <span>I am happy to be contacted by email about scheduling this conversation. *</span></label>
- <p><button class="primary" type="submit">Send</button></p>
+<div id="progress" role="progressbar" aria-label="Form progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i></i></div>
+<p class="meta" aria-live="polite"><span id="where">Welcome</span><span>About 8 minutes &middot; skip any question</span></p>
+
+<div class="card" id="card">
+<div class="draft" id="draftbar" hidden><span>We saved your answers on this device<span id="draftwhen"></span>.</span>
+ <span><button type="button" class="btn primary" id="draftgo">Continue where I left off</button> <button type="button" class="link" id="draftno">Start fresh</button></span></div>
+<form id="rf" method="post" action="{{ url_for('research') }}" novalidate>
+ {% if error %}<div class="err" role="alert" id="servererr">{{ error }}</div>{% endif %}
+
+ <section class="step" data-id="intro" data-title="Welcome">
+  <h1>A 20-minute research conversation</h1>
+  <p>We are students working on a strategy project about how developer-focused companies find and act on developer activity (GitHub, docs, community, product sign-ups). The case company for the project is Reo.Dev.</p>
+  <p>It is research, not a sales call. This short form lets you tell us how your team works in your own words, and tell us if you are happy to talk. There are no right answers, and you can skip anything.</p>
+  <p class="mut">We will ask before recording anything. Notes are used in our write-up without your name or company unless you say otherwise.{% if contact %} Questions? Email <a href="mailto:{{ contact }}">{{ contact }}</a>.{% endif %}</p>
+  <div class="nav"><span></span><button type="button" class="btn primary" data-go="next">Start &rarr;</button></div>
+ </section>
+
+ <section class="step" data-id="you" data-title="About you">
+  <div class="qnum">About you</div><h2>First, who are we talking to?</h2><p class="hint">Only your name, email and company are needed.</p>
+  <div class="two"><div><label class="f" for="name">Your name *</label><input id="name" name="name" type="text" maxlength="120" autocomplete="name" value="{{ form.get('name','') }}"><p class="fe">Please tell us your name.</p></div>
+   <div><label class="f" for="email">Work email *</label><input id="email" name="email" type="email" maxlength="200" autocomplete="email" value="{{ form.get('email','') }}"><p class="fe">Please enter a valid email, like name@company.com.</p></div>
+   <div><label class="f" for="company">Company *</label><input id="company" name="company" type="text" maxlength="120" autocomplete="organization" value="{{ form.get('company','') }}"><p class="fe">Please tell us your company.</p></div>
+   <div><label class="f" for="role">Your job title</label><input id="role" name="role" type="text" maxlength="120" autocomplete="organization-title" value="{{ form.get('role','') }}"></div></div>
+  <div class="two">{% for g in profile %}<div><label class="f" for="p_{{ g.name }}">{{ g.label }}</label>
+   <select id="p_{{ g.name }}" name="p_{{ g.name }}"><option value="">Choose...</option>{% for o in g.options %}<option {{ 'selected' if form.get('p_' ~ g.name)==o }}>{{ o }}</option>{% endfor %}</select></div>{% endfor %}</div>
+  <div class="glabel" id="crlabel" style="margin-top:18px">Have you used Common Room?</div>
+  <div class="choice" role="radiogroup" aria-labelledby="crlabel">{% for c in cr_statuses %}<label><input type="radio" name="cr_status" value="{{ c }}" {{ 'checked' if form.get('cr_status')==c }}><span>{{ c }}</span></label>{% endfor %}</div>
+  <p class="mut" style="margin-top:8px">The questions adjust to your answer.</p>
+  <div class="nav"><button type="button" class="btn" data-go="back">&larr; Back</button><button type="button" class="btn primary" data-go="next">Next &rarr;</button></div>
+ </section>
+
+ {% for q in questions %}
+ <section class="step q" data-id="{{ q.id }}" data-n="{{ loop.index }}" data-title="Question {{ loop.index }} of {{ questions|length }}">
+  <div class="qnum">Question {{ loop.index }} of {{ questions|length }}</div>
+  <h2 class="qt" id="t-{{ q.id }}" data-main="{{ q.title }}" data-alt="{{ q.alt }}">{{ q.title }}</h2>
+  {% if q.hint %}<p class="hint">{{ q.hint }}</p>{% endif %}
+  {% for g in q.groups %}
+   <div class="grp" {% if g.only_if %}data-only="{{ g.only_if|join(',') }}"{% endif %}>
+    <div class="glabel" id="l-{{ q.id }}-{{ g.name }}">{{ g.label }}</div>
+    {% if g.kind == 'select' %}
+     <select name="{{ q.id }}_{{ g.name }}" aria-labelledby="l-{{ q.id }}-{{ g.name }}"><option value="">Choose...</option>{% for o in g.options %}<option {{ 'selected' if form.get(q.id ~ '_' ~ g.name)==o }}>{{ o }}</option>{% endfor %}</select>
+    {% else %}
+     <div class="chips" role="group" aria-labelledby="l-{{ q.id }}-{{ g.name }}">{% for o in g.options %}<label class="chip"><input type="checkbox" name="{{ q.id }}_{{ g.name }}" value="{{ o }}" {{ 'checked' if o in form.getlist(q.id ~ '_' ~ g.name) }}><span>{{ o }}</span></label>{% endfor %}</div>
+    {% endif %}
+   </div>
+  {% endfor %}
+  {% if q.referrals %}
+   {% for i in range(1, refs + 1) %}<div class="ref {{ 'later' if i > 1 and not form.get('ref_name_' ~ i) }}" data-ref="{{ i }}">
+    <input type="text" name="ref_name_{{ i }}" maxlength="120" placeholder="Their name" aria-label="Name of person {{ i }}" value="{{ form.get('ref_name_' ~ i,'') }}">
+    <input type="text" name="ref_contact_{{ i }}" maxlength="200" placeholder="Email or LinkedIn (optional)" aria-label="How to reach person {{ i }}" value="{{ form.get('ref_contact_' ~ i,'') }}"></div>{% endfor %}
+   <button type="button" class="link" id="addref">+ Add another person</button>
+  {% else %}
+   <div class="grp"><label class="f" for="a-{{ q.id }}">{{ 'Anything to add?' if q.groups else 'Your answer' }}{% if q.optional_note %} (optional){% endif %}</label>
+    <textarea id="a-{{ q.id }}" name="{{ q.id }}" maxlength="2000" placeholder="{{ q.placeholder }}">{{ form.get(q.id,'') }}</textarea><div class="count"><span>0</span> / 2000</div></div>
+  {% endif %}
+  <div class="nav"><button type="button" class="btn" data-go="back">&larr; Back</button>
+   <span><button type="button" class="link" data-go="skip">Skip</button> <button type="button" class="btn primary" data-go="next">Next &rarr;</button></span></div>
+  <p class="kbd js-only" style="display:none"><kbd>Ctrl</kbd> + <kbd>Enter</kbd> for next</p>
+ </section>
+ {% endfor %}
+
+ <section class="step" data-id="finish" data-title="Review and send">
+  <div class="qnum">Last step</div><h2>Check your answers, then send</h2>
+  <ul class="review" id="review"></ul>
+  <div class="two">{% for g in schedule %}<div><label class="f" for="p_{{ g.name }}">{{ g.label }}</label>
+   <select id="p_{{ g.name }}" name="p_{{ g.name }}"><option value="">Choose...</option>{% for o in g.options %}<option {{ 'selected' if form.get('p_' ~ g.name)==o }}>{{ o }}</option>{% endfor %}</select></div>{% endfor %}</div>
+  <label class="f" for="availability">Anything else about timing? (optional)</label>
+  <textarea id="availability" name="availability" maxlength="500" style="min-height:70px" placeholder="e.g. Not the week of the 14th">{{ form.get('availability','') }}</textarea>
+  <label class="chk"><input type="checkbox" name="consent" value="yes" id="consent" {{ 'checked' if form.get('consent')=='yes' }}><span>I am happy to be contacted by email about this research, including scheduling a call. *</span></label>
+  <p class="fe" id="consenterr">Please tick this so we know you are happy to be contacted.</p>
+  <label class="chk"><input type="checkbox" name="quote_ok" value="yes" {{ 'checked' if form.get('quote_ok')=='yes' }}><span>It is fine to quote my answers anonymously in the write-up. (optional)</span></label>
+  <div class="err" id="sendErr" role="alert" style="display:none"></div>
+  <div class="hp" aria-hidden="true"><label>Leave this empty <input name="website" tabindex="-1" autocomplete="off"></label></div>
+  <div class="nav" style="display:flex"><button type="button" class="btn js-only" data-go="back" style="display:none">&larr; Back</button><button class="btn primary" type="submit" id="send">Send my answers</button></div>
+ </section>
 </form>
+</div>
+
+<div class="card done" id="thanks" hidden><div class="tick" aria-hidden="true">&#10003;</div><h1>Thank you</h1>
+ <p>We have your answers and will email you to confirm a time if you asked for a call. If you change your mind about anything, just reply to that email.</p></div>
+
+<script>
+(function(){
+ var form=document.getElementById('rf');if(!form)return;
+ var steps=[].slice.call(form.querySelectorAll('.step')),cur=0,KEY='reodev-research-draft-v1';
+ var bar=document.querySelector('#progress i'),pg=document.getElementById('progress'),where=document.getElementById('where');
+ var status=function(){var r=form.querySelector('input[name=cr_status]:checked');return r?r.value:''};
+ var idx=function(id){for(var i=0;i<steps.length;i++)if(steps[i].dataset.id===id)return i;return 0};
+ [].forEach.call(document.querySelectorAll('.js-only'),function(e){e.style.display=''});
+ function save(){try{var d={step:cur,at:Date.now(),f:{}};[].forEach.call(form.elements,function(e){if(!e.name||e.name==='website'||e.type==='submit')return;
+   if(e.type==='checkbox'||e.type==='radio'){if(e.checked)(d.f[e.name]=d.f[e.name]||[]).push(e.value)}else if(e.value)d.f[e.name]=[e.value]});
+  localStorage.setItem(KEY,JSON.stringify(d))}catch(x){}}
+ var st=null;function later(){clearTimeout(st);st=setTimeout(save,300)}
+ function load(){try{var d=JSON.parse(localStorage.getItem(KEY)||'null');return d&&d.f&&Object.keys(d.f).length?d:null}catch(x){return null}}
+ function restore(d){[].forEach.call(form.elements,function(e){if(!e.name||!d.f[e.name])return;
+   if(e.type==='checkbox'||e.type==='radio')e.checked=d.f[e.name].indexOf(e.value)>-1;else e.value=d.f[e.name][0]});apply();counts()}
+ function apply(){ // wording and visible dropdowns follow "Have you used Common Room?"
+  var s=status(),alt=(s==='I have not used it'||s==='I looked at it'),key=s==='I use it now'?'now':(s==='I used it before'?'before':'');
+  [].forEach.call(form.querySelectorAll('.qt'),function(h){h.textContent=alt?h.dataset.alt:h.dataset.main});
+  [].forEach.call(form.querySelectorAll('.grp[data-only]'),function(g){g.hidden=(s!==''&&g.dataset.only.split(',').indexOf(key)<0)})}
+ function counts(){[].forEach.call(form.querySelectorAll('textarea[maxlength="2000"]'),function(t){var c=t.parentNode.querySelector('.count span');if(c)c.textContent=t.value.length})}
+ function show(i,back,noHist){
+  cur=Math.max(0,Math.min(steps.length-1,i));
+  steps.forEach(function(s,n){s.classList.remove('active','in-fwd','in-back');if(n===cur){s.classList.add('active');s.classList.add(back?'in-back':'in-fwd')}});
+  var pct=Math.round(cur/(steps.length-1)*100);bar.style.width=pct+'%';pg.setAttribute('aria-valuenow',pct);where.textContent=steps[cur].dataset.title||'';
+  if(steps[cur].dataset.id==='finish')review();
+  if(!noHist)try{history.pushState({i:cur},'','#'+steps[cur].dataset.id)}catch(x){}
+  var f=steps[cur].querySelector('textarea,input[type=text],input[type=email],select');if(f&&steps[cur].dataset.id!=='intro'&&!/Mobi|Android/i.test(navigator.userAgent))setTimeout(function(){try{f.focus({preventScroll:true})}catch(x){}},60);
+  window.scrollTo({top:0,behavior:'smooth'});save()}
+ function bad(el,on){el.classList.toggle('invalid',on)}
+ function validateYou(){var n=form.name,e=form.email,c=form.company,ok=true;
+  bad(n,!n.value.trim());bad(c,!c.value.trim());bad(e,!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e.value.trim()));
+  var first=form.querySelector('.invalid');if(first){ok=false;first.focus()}return ok}
+ [].forEach.call(['name','email','company'],function(n){form[n].addEventListener('input',function(){bad(form[n],false)})});
+ function next(){if(steps[cur].dataset.id==='you'&&!validateYou())return;show(cur+1,false)}
+ function back(){show(cur-1,true)}
+ form.addEventListener('click',function(e){var b=e.target.closest('[data-go]');if(!b)return;var g=b.dataset.go;g==='next'?next():g==='back'?back():show(cur+1,false)});
+ form.addEventListener('keydown',function(e){
+  var t=e.target;if(steps[cur].dataset.id==='finish'&&!(t.tagName==='TEXTAREA'))return;
+  if(e.key==='Enter'&&(t.tagName==='INPUT'&&(t.type==='text'||t.type==='email'))){e.preventDefault();if(steps[cur].dataset.id==='finish')return;
+    var inp=[].slice.call(steps[cur].querySelectorAll('input[type=text],input[type=email]')).filter(function(x){return x.offsetParent});
+    var k=inp.indexOf(t);if(k>-1&&k<inp.length-1)inp[k+1].focus();else next()}
+  if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)&&steps[cur].dataset.id!=='finish'){e.preventDefault();next()}});
+ form.addEventListener('input',function(e){if(e.target.tagName==='TEXTAREA')counts();later()});
+ form.addEventListener('change',function(e){if(e.target.name==='cr_status')apply();later()});
+ var addref=document.getElementById('addref');
+ if(addref)addref.addEventListener('click',function(){var h=form.querySelector('.ref.later');if(h){h.classList.remove('later');h.querySelector('input').focus()}if(!form.querySelector('.ref.later'))addref.style.display='none'});
+ function summarize(s){var parts=[],t=s.querySelector('textarea');
+  if(t&&t.value.trim())parts.push(t.value.trim().length>150?t.value.trim().slice(0,150)+'...':t.value.trim());
+  [].forEach.call(s.querySelectorAll('.grp:not([hidden])'),function(g){var lab=(g.querySelector('.glabel')||{}).textContent,vals=[];
+   [].forEach.call(g.querySelectorAll('input:checked'),function(c){vals.push(c.value)});var sel=g.querySelector('select');if(sel&&sel.value)vals.push(sel.value);
+   if(vals.length)parts.push(lab+': '+vals.join(', '))});
+  [].forEach.call(s.querySelectorAll('.ref'),function(r){var i=r.querySelectorAll('input');if(i[0].value.trim())parts.push(i[0].value.trim())});
+  return parts}
+ function review(){var ul=document.getElementById('review');ul.innerHTML='';
+  steps.forEach(function(s,n){if(!s.classList.contains('q'))return;var h=s.querySelector('.qt'),p=summarize(s),li=document.createElement('li');
+   var d=document.createElement('div'),b=document.createElement('b'),v=document.createElement('span');b.textContent=h.textContent;v.className='v'+(p.length?'':' skip');v.textContent=p.length?p.join(' | '):'Skipped';
+   d.appendChild(b);d.appendChild(v);var e=document.createElement('button');e.type='button';e.className='link';e.textContent=p.length?'Edit':'Answer';e.addEventListener('click',function(){show(n,true)});li.appendChild(d);li.appendChild(e);ul.appendChild(li)})}
+ function oops(msg,stepId){var b=document.getElementById('sendErr');b.textContent=msg;b.style.display='block';if(stepId)show(idx(stepId),true);else b.scrollIntoView({block:'center'})}
+ form.addEventListener('submit',function(e){
+  e.preventDefault();var btn=document.getElementById('send'),c=document.getElementById('consent'),ce=document.getElementById('consenterr');
+  document.getElementById('sendErr').style.display='none';
+  if(!validateYou()){show(idx('you'),true);return}
+  if(!c.checked){ce.classList.add('show');c.focus();return}ce.classList.remove('show');
+  btn.disabled=true;var old=btn.textContent;btn.innerHTML='<span class="spin"></span>Sending...';
+  fetch(form.action,{method:'POST',headers:{'X-Requested-With':'fetch'},body:new FormData(form)})
+   .then(function(r){return r.json().catch(function(){return {ok:false,error:'Something unexpected happened. Please try again.'}}).then(function(j){
+     if(j.ok){try{localStorage.removeItem(KEY)}catch(x){}document.getElementById('card').hidden=true;pg.style.display='none';document.querySelector('.meta').style.display='none';document.getElementById('thanks').hidden=false;window.scrollTo({top:0,behavior:'smooth'});return}
+     btn.disabled=false;btn.textContent=old;var m=j.error||'We could not send that. Please try again.';oops(m,/name|company|email/i.test(m)?'you':null)})})
+   .catch(function(){btn.disabled=false;btn.textContent=old;oops('No connection. Your answers are saved on this device, so you can try again in a moment.')})});
+ window.addEventListener('popstate',function(e){var i=e.state&&typeof e.state.i==='number'?e.state.i:0;show(i,i<cur,true)});
+ // start
+ var d=load(),bar2=document.getElementById('draftbar');
+ if(d&&!form.name.value){bar2.hidden=false;var mins=Math.round((Date.now()-d.at)/60000);document.getElementById('draftwhen').textContent=mins<1?' just now':mins<60?' '+mins+' minutes ago':' earlier';
+  document.getElementById('draftgo').onclick=function(){restore(d);bar2.hidden=true;show(Math.max(1,Math.min(d.step||1,steps.length-1)),false)};
+  document.getElementById('draftno').onclick=function(){try{localStorage.removeItem(KEY)}catch(x){}bar2.hidden=true}}
+ var srv=document.getElementById('servererr');apply();counts();show(srv?idx('you'):0,false,true);try{history.replaceState({i:cur},'','#'+steps[cur].dataset.id)}catch(x){}
+})();
+</script>
 {% endif %}
-{% endblock %}
+</main></body></html>
