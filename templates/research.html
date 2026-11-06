@@ -191,7 +191,8 @@ textarea{min-height:140px;resize:vertical}input:focus,textarea:focus{outline:non
   var curAct=steps[cur].dataset.act;acts.forEach(function(li){var a=li.dataset.act,ids=v.filter(function(i){return steps[i].dataset.act===a});if(!ids.length){li.style.display='none';return}li.style.display='';
    var first=ids[0],last=ids[ids.length-1],state=curAct===a?'current':(cur>last?'done':'todo');li.dataset.state=state;li.dataset.first=first;
    if(state==='current')li.setAttribute('aria-current','step');else li.removeAttribute('aria-current')});
-  document.title=(steps[cur].dataset.title&&!isIntro?steps[cur].dataset.title.slice(0,50)+' | ':'')+where}
+  var h=steps[cur].querySelector('h2'),t=h?h.textContent:(steps[cur].dataset.title||'');
+  document.title=(t&&!isIntro?t.slice(0,50)+' | ':'')+where}
  acts.forEach(function(li){li.addEventListener('click',function(){if(li.dataset.state==='done')go(+li.dataset.first,true)})});
  // ---------- moving around
  function go(i,backDir,noHist){clearTimeout(advTimer);cur=i;
