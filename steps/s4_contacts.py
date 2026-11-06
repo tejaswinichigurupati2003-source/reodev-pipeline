@@ -1,4 +1,4 @@
-"""Step 4 - Find up to 3 people to contact per account from Apollo and/or Hunter (nobody is invented).
+"""Step 4 - Find up to 3 people to contact per account from Apollo, Prospeo and/or Hunter (nobody is invented).
 
 Output: data/<domain>/step4_contacts.json
 Filter (code): first + last name, email, Hunter confidence >= 70, title on the persona list below.
@@ -14,6 +14,7 @@ from urllib.parse import quote
 
 import apollo
 import hunter
+import prospeo
 import pipeline_io as io
 
 OUTPUT_FILE = "step4_contacts.json"
@@ -85,7 +86,7 @@ def pick_contacts(hunter_emails, headcount):
 
 def is_cached(domain):
     """True if a provider already answered for this domain (so running it again spends nothing)."""
-    return io.exists(domain, apollo.CACHE_FILE) or io.exists(domain, hunter.CACHE_FILE)
+    return any(io.exists(domain, f) for f in (apollo.CACHE_FILE, prospeo.CACHE_FILE, hunter.CACHE_FILE))
 
 
 def make_want(headcount):
@@ -101,32 +102,43 @@ def make_want(headcount):
     return want
 
 
+def _providers(domain, headcount):
+    """(name, api-key variable, cache file, error class, function returning people) in the order they are tried."""
+    want = make_want(headcount)
+    return [
+        ("apollo", "APOLLO_API_KEY", apollo.CACHE_FILE, apollo.ApolloError, lambda: apollo.find_people(domain, want)),
+        ("prospeo", "PROSPEO_API_KEY", prospeo.CACHE_FILE, prospeo.ProspeoError, lambda: prospeo.find_people(domain, want)),
+        ("hunter", "HUNTER_API_KEY", hunter.CACHE_FILE, hunter.HunterError,
+         lambda: (hunter.domain_search(domain).get("data") or {}).get("emails") or []),
+    ]
+
+
 def fetch_people(domain, headcount):
-    """Ask the providers in order. CONTACT_PROVIDER = auto (Apollo, then Hunter) | apollo | hunter.
-    Returns (people, source, notes). Raises only if every provider that was tried failed."""
+    """Ask the providers in order (Apollo, Prospeo, Hunter), skipping any without a key (or cache).
+    CONTACT_PROVIDER = auto (all) | apollo | prospeo | hunter forces one.
+    The first provider that returns people wins. Returns (people, source, notes).
+    Raises only if every provider that was tried failed."""
     mode = (os.getenv("CONTACT_PROVIDER") or "auto").lower()
-    notes, errors = [], []
-    if mode in ("auto", "apollo") and (os.getenv("APOLLO_API_KEY") or io.exists(domain, apollo.CACHE_FILE) or mode == "apollo"):
+    notes, errors, tried = [], [], []
+    for name, key_var, cache_file, err_cls, find in _providers(domain, headcount):
+        if mode not in ("auto", name):
+            continue
+        if not (os.getenv(key_var) or io.exists(domain, cache_file) or mode == name):
+            continue
+        tried.append(name)
         try:
-            people = apollo.find_people(domain, make_want(headcount))
+            people = find()
             if people:
-                return people, "apollo", notes
-            notes.append("apollo returned nobody")
-        except apollo.ApolloError as exc:
+                return people, name, notes
+            notes.append(f"{name} returned nobody")
+        except err_cls as exc:
             errors.append(str(exc))
-            notes.append(f"apollo failed: {exc}")
-    if mode in ("auto", "hunter") and (os.getenv("HUNTER_API_KEY") or io.exists(domain, hunter.CACHE_FILE) or mode == "hunter"):
-        try:
-            data = hunter.domain_search(domain)
-            return (data.get("data") or {}).get("emails") or [], "hunter", notes
-        except hunter.HunterError as exc:
-            errors.append(str(exc))
-            notes.append(f"hunter failed: {exc}")
-    if errors:
+            notes.append(f"{name} failed: {exc}")
+    if errors and len(errors) == len(tried):
         raise RuntimeError("; ".join(errors))
-    if not notes:
-        raise RuntimeError("no contact provider configured: set APOLLO_API_KEY and/or HUNTER_API_KEY in .env")
-    return [], "apollo", notes
+    if not tried:
+        raise RuntimeError("no contact provider configured: set PROSPEO_API_KEY and/or HUNTER_API_KEY in .env")
+    return [], tried[-1], notes
 
 
 def run(domain, company=None, fresh=False):

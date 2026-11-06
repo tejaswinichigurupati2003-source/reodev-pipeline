@@ -3,7 +3,7 @@
     python discover.py                          # 0. build data/accounts.csv (Common Room customers + your seeds)
     python pipeline.py                          # 1-3 for every account, then 4 (contacts) for the top-ranked ones
     python pipeline.py --domain acme.com        # one account
-    python pipeline.py --max-hunter 40          # Hunter searches to spend this run (free plan ~50/month)
+    python pipeline.py --max-lookups 40          # accounts to look up this run (credits are limited)
     python pipeline.py --no-contacts            # scrape, extract and score only (no Hunter credits)
 
 Output: data/leads.csv (the outreach tracker, ranked) and data/<domain>/stepN_*.json (every decision, inspectable).
@@ -75,7 +75,8 @@ def run_all(accounts, max_hunter=40, contacts=True, fresh=False, tiers=("A", "B"
 def main(argv=None):
     p = argparse.ArgumentParser(description="Reo.Dev switch-campaign lead pipeline.")
     p.add_argument("--domain", help="run one account only")
-    p.add_argument("--max-hunter", type=int, default=40, help="max NEW Hunter searches this run (default 40)")
+    p.add_argument("--max-lookups", "--max-hunter", dest="max_lookups", type=int, default=40,
+                   help="max accounts to look up contacts for with a NEW provider call this run (default 40)")
     p.add_argument("--no-contacts", action="store_true")
     p.add_argument("--no-drafts", action="store_true", help="skip writing email drafts (drafts are never sent)")
     p.add_argument("--fresh", action="store_true", help="redo scrape/extract/score (Hunter is never re-searched)")
@@ -88,7 +89,7 @@ def main(argv=None):
             {"name": dom, "domain": dom, "status": "unverified", "how_identified": "manual", "source_url": "", "evidence": ""}]
     if not accounts:
         p.error("no accounts: run `python discover.py` first (or `--seed my_list.csv`)")
-    path, summary = run_all(accounts, args.max_hunter, not args.no_contacts, args.fresh, drafts=not args.no_drafts)
+    path, summary = run_all(accounts, args.max_lookups, not args.no_contacts, args.fresh, drafts=not args.no_drafts)
     print(f"\nWrote {path}\n{summary}")
     return 0
 
