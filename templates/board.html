@@ -65,7 +65,11 @@ dialog input,dialog select{width:100%;font:inherit;color:inherit;background:var(
 </aside>
 <main>
  <div class="top"><span>Workspace / <b>Outreach board</b></span><span>Reo.Dev &middot; Common Room switch campaign</span></div>
- <div class="head"><div><h1>Outreach board</h1><div class="sub">{{ total }} leads &middot; drag a card to change its stage</div></div>
+ <div class="head"><div><h1>Outreach board</h1><div class="sub">{{ total }} of {{ total_all }} leads shown &middot; drag a card to change its stage</div>
+  {% if tier or only_email %}<div class="sub" style="margin-top:8px"><b style="color:var(--fg)">Filters on:</b>
+   {% if tier %}<span class="tag t-{{ tier }}">{{ 'Added by you' if tier=='MY' else 'Tier ' ~ tier }}</span>{% endif %}
+   {% if only_email %}<span class="tag t-MY">only with email</span>{% endif %}
+   <a href="{{ url_for('board') }}" style="color:var(--acc);margin-left:6px">Clear filters</a></div>{% endif %}</div>
   <button class="pill dark" data-add="not contacted">+ Add contact</button></div>
  <div class="board" id="board" data-csrf="{{ csrf() }}">
  {% for s in statuses %}{% set i = loop.index0 %}
@@ -73,6 +77,7 @@ dialog input,dialog select{width:100%;font:inherit;color:inherit;background:var(
    <div class="ch"><div><b style="color:var(--h{{ i }})">{{ s }}</b><span class="cnt"><span class="count">{{ cols[s]|length }}</span> leads</span></div>
     <span class="r" style="color:var(--h{{ i }})">{{ cols[s]|selectattr('email')|list|length }} <span class="cnt">with email</span></span></div>
    <div class="cards">
+   {% if not cols[s] %}<div class="who" style="padding:6px 8px">{% if total == 0 and (tier or only_email) %}Nothing matches the filters.{% else %}Nothing here yet. Drag a card in.{% endif %}</div>{% endif %}
    {% for l in cols[s] %}
     <div class="card" draggable="true" data-key="{{ l.key }}">
      <div class="ct"><b>{{ l.company }}</b><span class="tag t-{{ l.tier }}">{{ 'Added by you' if l.tier=='MY' else 'Tier ' ~ l.tier }}</span></div>
