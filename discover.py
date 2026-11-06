@@ -113,6 +113,45 @@ def discover(fetch=None):
     return rows
 
 
+TLDS = ["com", "io", "ai", "dev", "co", "so", "app"]
+
+
+def candidate_domains(name):
+    """Plausible websites for a company name, e.g. 'Otter AI' -> otterai.com, otterai.io ..."""
+    slug = re.sub(r"[^a-z0-9]", "", name.split("/")[0].lower())
+    return [f"{slug}.{t}" for t in TLDS] if slug else []
+
+
+def resolve_domain(name, fetch=None):
+    """Find a company's website by fetching candidates and checking the page text mentions the name.
+    Returns a domain or None. This is a CHECKED GUESS (e.g. circle.com is a different 'Circle'),
+    so callers must mark it for human review, never as verified."""
+    fetch = fetch or own_scraper.fetch_doc
+    first = re.sub(r"[^a-z0-9 ]", "", name.split("/")[0].lower()).strip()
+    for cand in candidate_domains(name):
+        try:
+            text = fetch(f"https://{cand}")["markdown"][:3000].lower()
+        except Exception:
+            continue
+        if first and first in text:
+            return cand
+    return None
+
+
+def resolve_missing(rows, fetch=None):
+    """Fill empty domains where a candidate site checks out. Returns how many were resolved."""
+    n = 0
+    for r in rows:
+        if r["domain"] or r["status"] != "needs_domain":
+            continue
+        d = resolve_domain(r["name"], fetch)
+        if d:
+            r["domain"], r["status"] = d, "domain_unconfirmed"
+            r["how_identified"] += " | website found by name check, CONFIRM it is the right company"
+            n += 1
+    return n
+
+
 def read_seed(path):
     rows = []
     with open(path, encoding="utf-8-sig", newline="") as f:
@@ -127,7 +166,7 @@ def read_seed(path):
 
 def merge(existing, new):
     """Keep one row per domain (or per name when the domain is unknown). Verified beats unverified."""
-    rank = {"verified_public": 0, "unverified": 1, "needs_domain": 2}
+    rank = {"verified_public": 0, "domain_unconfirmed": 1, "unverified": 2, "needs_domain": 3}
     out = {}
     for r in existing + new:
         key = r["domain"] or "name:" + r["name"].lower()
@@ -158,11 +197,14 @@ def main(argv=None):
     p = argparse.ArgumentParser(description="Build the Common Room customer account list.")
     p.add_argument("--seed", help="CSV of accounts you found by hand")
     p.add_argument("--no-scrape", action="store_true", help="only merge --seed, skip commonroom.io")
+    p.add_argument("--resolve", action="store_true", help="try to find websites for rows with no domain (flagged for review)")
     args = p.parse_args(argv)
     new = [] if args.no_scrape else discover()
     if args.seed:
         new += read_seed(args.seed)
     rows = merge(load_accounts(), new)
+    if args.resolve:
+        print(f"resolved {resolve_missing(rows)} domains (status domain_unconfirmed: please review)")
     path = save_accounts(rows)
     by = {}
     for r in rows:

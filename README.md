@@ -9,7 +9,8 @@ steps/s1_scrape    1. polite scrape of the company's own pages (robots.txt respe
 steps/s2_extract   2. LLM extracts facts; every quote is checked against the page, fake quotes are dropped
 steps/s3_score     3. code-only score: fit 40 + value 20 + switching proxy 25 + ease 15 -> tier A/B/C/SKIP
 steps/s4_contacts  4. Hunter.io people -> up to 3 per account by persona (DevRel > Growth/Marketing > RevOps/Sales > Founder if <25 staff)
-export.py          5. data/leads.csv: ranked tracker, empty columns for outreach and interview status
+steps/s5_draft     5. one email DRAFT per contact (LLM writes, code checks tone/length/banned claims, hook quote verified). Never sent.
+export.py          6. data/leads.csv: ranked tracker, empty columns for outreach and interview status
 ```
 
 ## Setup
@@ -28,6 +29,16 @@ uv run --python 3.12 --with-requirements requirements.txt python pipeline.py --n
 uv run --python 3.12 --with-requirements requirements.txt python pipeline.py --max-hunter 40 # then spend Hunter credits on the top-ranked
 ```
 Seed CSV columns: `name,domain,source_url,how_identified` (anything you found by hand: G2, LinkedIn posts, interviews).
+
+## Finding websites for customers with no domain
+`python discover.py --no-scrape --resolve` tries `name.com/.io/.ai/.dev/.co/.so/.app`, keeps a site only if its page mentions the
+company name, and marks it `domain_unconfirmed`. It is a checked guess (for example `circle.com` is a different "Circle"), so
+review those rows before trusting them.
+
+## Email drafts
+Drafts use only facts about Reo.Dev from the problem statement and facts from the target's own pages. They never mention Zoom,
+an acquisition or Common Room, and make no discount or numeric claims. Rows the checks flag show `needs review`.
+Nothing in this project can send email: send manually or from your own tool after you review.
 
 ## Contact providers (Apollo and/or Hunter)
 `CONTACT_PROVIDER=auto` (default) tries **Apollo first, Hunter as the fallback**; `apollo` or `hunter` forces one. Set at least one key.

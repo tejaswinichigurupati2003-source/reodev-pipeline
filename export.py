@@ -12,6 +12,7 @@ import pipeline_io as io
 COLUMNS = ["rank", "tier", "score", "company", "domain", "account_status", "how_identified", "source_url",
            "company_type", "headcount", "fit", "value", "switching_proxy", "ease", "devrel_evidence",
            "contact_name", "contact_title", "persona", "email", "email_confidence", "contact_source", "linkedin_search",
+           "draft_subject", "draft_body", "draft_flags",
            "contact_status", "last_touch", "channel", "reply", "interview_done", "notes"]
 
 
@@ -40,8 +41,11 @@ def build_rows(accounts):
                 "switching_proxy": sc["switching"], "ease": sc["ease"], "devrel_evidence": evidence,
                 "linkedin_search": ct.get("linkedin_search", ""), "contact_status": "not contacted"}
         people = ct.get("contacts") or [{}]
+        drafts = (_load(d, "step5_drafts.json") or {}).get("drafts", {})
         for p in people:
-            rows.append({**base, "contact_name": p.get("name"), "contact_title": p.get("title"), "persona": p.get("persona"),
+            dr = drafts.get(p.get("email"), {})
+            rows.append({**base, "draft_subject": dr.get("subject"), "draft_body": dr.get("body"),
+                         "draft_flags": "; ".join(dr.get("flags", [])),"contact_name": p.get("name"), "contact_title": p.get("title"), "persona": p.get("persona"),
                          "email": p.get("email"), "email_confidence": p.get("hunter_confidence"), "contact_source": p.get("source")})
     order = {"A": 0, "B": 1, "C": 2, "SKIP": 3}
     rows.sort(key=lambda r: (order[r["tier"]], -r["score"], r["domain"]))

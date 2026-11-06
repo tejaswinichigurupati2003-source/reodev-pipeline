@@ -77,8 +77,8 @@ def lead_key(row):
 def sync(rows):
     """Replace the leads table with `rows` (from export.build_rows). Returns the number of rows."""
     with connect() as db:
+        db.execute("DROP TABLE IF EXISTS leads")  # leads is only a copy of data/, so rebuilding it is safe (tracker is separate)
         init(db)
-        db.execute("DELETE FROM leads")
         for r in rows:
             vals = [lead_key(r)] + [r.get(c) for c in LEAD_COLUMNS]
             db.execute(f"INSERT INTO leads (key, {', '.join(LEAD_COLUMNS)}) VALUES ({', '.join('?' * (len(LEAD_COLUMNS) + 1))})", vals)
