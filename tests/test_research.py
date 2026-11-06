@@ -94,7 +94,7 @@ def test_form_is_public_even_when_the_dashboard_has_a_password(monkeypatch):
     assert c.get("/board").status_code == 302
     assert c.get("/research").status_code == 200              # form: open to invitees
     assert c.get("/research/thanks").status_code == 200
-    assert c.get("/responses").status_code in (302, 404)      # responses: never open
+    assert c.get("/responses").status_code in (302, 404)      # responses: never open without signing in or a key
 
 
 def test_form_validation_messages(monkeypatch):
@@ -128,7 +128,10 @@ def test_responses_need_the_secret_key_even_in_public_mode(monkeypatch):
     c.post("/research", data={**GOOD, "name": "<b>Bold</b>"})
     assert c.get("/responses").status_code == 404                          # no RESPONSES_KEY configured: disabled
     c = make_client(monkeypatch, DASHBOARD_PUBLIC="1", RESPONSES_KEY="s3cret-key")
-    assert c.get("/responses").status_code == 404 and c.get("/responses?key=wrong").status_code == 404
+    locked = c.get("/responses")
+    assert locked.status_code == 200 and "private key" in locked.get_data(as_text=True) and "sam@example.com" not in locked.get_data(as_text=True)
+    wrong = c.get("/responses?key=wrong")
+    assert wrong.status_code == 403 and "not right" in wrong.get_data(as_text=True) and "sam@example.com" not in wrong.get_data(as_text=True)
     assert c.get("/responses.csv").status_code == 404
     r = c.get("/responses?key=s3cret-key")
     assert r.status_code == 302 and "key=" not in r.headers["Location"]      # key is removed from the address bar

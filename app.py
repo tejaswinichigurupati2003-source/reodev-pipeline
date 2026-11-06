@@ -404,8 +404,10 @@ def _responses_allowed():
 
 @app.route("/responses")
 def responses():
-    if not _responses_allowed():
-        abort(404)
+    if not os.getenv("RESPONSES_KEY"):
+        abort(404, "The responses page is not set up. Add RESPONSES_KEY to the environment to turn it on.")
+    if not _responses_allowed():  # configured, but no (or a wrong) key: ask for it instead of a dead end
+        return render_template("responses_locked.html", wrong=bool(request.args.get("key"))), (403 if request.args.get("key") else 200)
     if request.args.get("key"):
         return redirect(url_for("responses"))  # drop the key from the address bar
     return render_template("responses.html", rows=db.list_responses())

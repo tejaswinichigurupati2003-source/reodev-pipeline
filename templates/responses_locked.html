@@ -1,0 +1,14 @@
+{% extends "shell.html" %}
+{% set active = 'responses' %}
+{% block title %}Form responses{% endblock %}
+{% block crumb %}Form responses{% endblock %}
+{% block content %}
+<div class="head"><div><h1>Form responses</h1><div class="sub">Answers to your research form are people's personal details, so this page needs your private key.</div></div></div>
+<form class="panel" method="get" action="{{ url_for('responses') }}" style="max-width:520px">
+ {% if wrong %}<div class="err-inline" style="display:block" role="alert">That key is not right. Check the RESPONSES_KEY line in your .env file.</div>{% endif %}
+ <label for="rk" style="display:block;font-size:12px;color:var(--mut);margin-bottom:4px">Responses key</label>
+ <input id="rk" name="key" type="password" autocomplete="off" required style="width:100%" placeholder="Paste the RESPONSES_KEY value">
+ <p class="mut">It is saved in your .env file as <code>RESPONSES_KEY</code>. It is remembered for this browser session.</p>
+ <button class="btn primary">Unlock</button>
+</form>
+{% endblock %}
