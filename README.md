@@ -1,6 +1,6 @@
 # Reo.Dev switch-campaign lead pipeline
 
-Built on the same pattern as the Sprinto pipeline: **find accounts -> scrape -> extract facts -> score -> find contacts -> export**.
+**find accounts -> scrape -> extract facts -> score -> find contacts -> export**.
 It prepares leads only. It never sends anything.
 
 ```
