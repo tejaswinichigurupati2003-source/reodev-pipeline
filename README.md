@@ -66,3 +66,13 @@ A re-sync replaces the `leads` table but never touches your tracker notes.
 * **Hunter free plan is ~50 searches/month, 10 people per domain.** `--max-hunter` caps spend, accounts are searched best-score-first, and a domain is never searched twice (cached in `data/<domain>/hunter_raw.json`). For 200 accounts, expect to fill the rest with the LinkedIn search link in `leads.csv` and manual finds. Hunter's own confidence is shown; treat emails as unverified until a send bounces or passes a verifier.
 * LinkedIn is never scraped (link only). Check outreach against GDPR/CAN-SPAM and each tool's terms before sending.
 * The scraper only reads public pages; JS-only sites may come back thin (flagged as missing info, not guessed).
+
+## Running and tuning the dashboard
+* **Access:** set `DASHBOARD_PASSWORD` to require a sign-in, or `DASHBOARD_PUBLIC=1` to open it to anyone with the link (they can then
+  view and edit). The research form is always public. Its answers need `RESPONSES_KEY` (open `/responses` and paste it).
+* **Speed:** keep the Vercel function in the same region as the Neon database. `vercel.json` pins `sin1` (Singapore) because the
+  database is `aws-ap-southeast-1`. A cross-ocean database costs ~300 ms per query; this app does 1 to 4 queries per page.
+  Each response carries a `Server-Timing` header (database ms, query count, app ms) so you can see where time goes in the browser's network tab.
+* **Safe edits:** forms carry a version. If someone else saved the same lead first, your save is refused with a message instead of
+  silently overwriting theirs. Stage changes (dragging, the stage menus) only touch the stage.
+* **Tests never touch your data:** `tests/conftest.py` blocks `.env` and `DATABASE_URL`.
