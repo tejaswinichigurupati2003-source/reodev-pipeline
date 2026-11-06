@@ -17,6 +17,7 @@ import sys
 import db
 import discover
 import pipeline_io as io
+import users
 import export
 from steps import s1_scrape, s2_extract, s3_score, s4_contacts, s5_draft
 
@@ -65,7 +66,7 @@ def run_all(accounts, max_hunter=40, contacts=True, fresh=False, tiers=("A", "B"
             if not names_match(a):
                 log.info("%s: skipped contacts, page describes a different company than '%s' (check the domain)", d, a["name"])
                 continue
-            if not s4_contacts.is_cached(d):
+            if not s4_contacts.is_cached(d) and not users.known_contacts(d):  # known users cost no search credit
                 if spent >= max_hunter:
                     log.info("%s: skipped contacts, Hunter budget (%d) used up", d, max_hunter)
                     continue

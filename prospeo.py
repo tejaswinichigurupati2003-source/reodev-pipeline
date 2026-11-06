@@ -95,6 +95,18 @@ def enrich(person):
     return _call("/enrich-person", body, ok_errors=("NO_MATCH",)).get("person")
 
 
+def enrich_known(full_name, domain):
+    """Email for a person we already know by name and company (1 credit if found, none if not).
+    Returns {"email", "status", "linkedin_url", "title"} or None."""
+    body = {"only_verified_email": True, "data": {"full_name": full_name, "company_website": domain}}
+    p = _call("/enrich-person", body, ok_errors=("NO_MATCH",)).get("person") or {}
+    e = p.get("email") or {}
+    if e.get("email") and "*" not in e["email"]:
+        return {"email": e["email"], "status": e.get("status"), "linkedin_url": p.get("linkedin_url"),
+                "title": p.get("current_job_title")}
+    return None
+
+
 def find_people(domain, want):
     """Return people shaped like Hunter's `emails` list. `want(title)` -> sort key (lower = better) or None to skip."""
     if io.exists(domain, CACHE_FILE):

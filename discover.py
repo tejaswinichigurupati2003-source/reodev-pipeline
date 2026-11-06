@@ -113,6 +113,78 @@ def discover(fetch=None):
     return rows
 
 
+USER_FIELDS = ["name", "title", "company", "domain", "quote", "source_url", "status"]
+CTA = re.compile(r"^(read full story|watch.*|read more|learn more)$", re.I)
+STAT = re.compile(r"^\d[\d.,]*\s*(x|%)?\+?$")
+
+
+def users_from_page(html, page_url):
+    """Named people quoted on Common Room's customers page (they are Common Room users).
+    Each testimonial card is a link holding: [stat], quote, person name, job title, [call to action].
+    Returns [{"name", "title", "company_hint", "quote", "source_url"}]. Pure function: no network."""
+    soup = BeautifulSoup(html, "lxml")
+    out, seen = [], set()
+    for col in soup.select("[class*=masonryGridColumn]"):
+        for card in col.find_all(recursive=False):
+            parts = [p for p in card.get_text("|", strip=True).split("|") if p and not CTA.match(p)]
+            q = next((i for i, p in enumerate(parts) if p[:1] in "\"“‘'" and len(p) > 30), None)
+            if q is None or len(parts) < q + 3:  # need quote + name + title
+                continue
+            name, title = parts[q + 1], parts[q + 2]
+            if STAT.match(name) or len(name.split()) > 4 or name.lower() in seen:
+                continue
+            seen.add(name.lower())
+            href = card.get("href") or ""
+            alt = next((i.get("alt") for i in card.find_all("img") if i.get("alt")), "")
+            out.append({"name": name, "title": title, "quote": parts[q][:400],
+                        "company_hint": (href.strip("/").split("/")[-1] if "/customers/" in href else "") or re.sub(r"\s*logo\s*$", "", alt, flags=re.I),
+                        "source_url": (href if href.startswith("http") else "https://www.commonroom.io" + href) if href else page_url})
+    return out
+
+
+def match_company(hint, accounts):
+    """Map a case-study slug or logo name ('semgrep-warm-outbound...') to an account. Returns the account or None."""
+    slug = re.sub(r"[^a-z0-9]", "", (hint or "").lower())
+    if len(slug) < 3:
+        return None
+    best = None
+    for a in accounts:
+        key = re.sub(r"[^a-z0-9]", "", a["name"].split("/")[0].split()[0].lower())
+        if len(key) >= 3 and key in slug and (best is None or len(key) > len(best[0])):  # longest name inside the slug wins
+            best = (key, a)
+    return best[1] if best else None
+
+
+def discover_users(accounts, fetch=None):
+    fetch = fetch or own_scraper.fetch_doc
+    url = START_PAGES[0]
+    rows = []
+    for u in users_from_page(fetch(url)["raw_html"], url):
+        a = match_company(u["company_hint"], accounts)
+        rows.append({"name": u["name"], "title": u["title"], "company": a["name"] if a else u["company_hint"],
+                     "domain": a["domain"] if a else "", "quote": u["quote"], "source_url": u["source_url"],
+                     "status": "matched" if a and a["domain"] else "needs_company"})
+    return rows
+
+
+def save_users(rows):
+    path = io.DATA_DIR / "common_room_users.csv"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path, "w", encoding="utf-8", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=USER_FIELDS)
+        w.writeheader()
+        w.writerows(rows)
+    return path
+
+
+def load_users():
+    path = io.DATA_DIR / "common_room_users.csv"
+    if not path.exists():
+        return []
+    with open(path, encoding="utf-8", newline="") as f:
+        return list(csv.DictReader(f))
+
+
 TLDS = ["com", "io", "ai", "dev", "co", "so", "app"]
 
 
@@ -197,8 +269,14 @@ def main(argv=None):
     p = argparse.ArgumentParser(description="Build the Common Room customer account list.")
     p.add_argument("--seed", help="CSV of accounts you found by hand")
     p.add_argument("--no-scrape", action="store_true", help="only merge --seed, skip commonroom.io")
+    p.add_argument("--users", action="store_true", help="extract the named people quoted on Common Room's customers page")
     p.add_argument("--resolve", action="store_true", help="try to find websites for rows with no domain (flagged for review)")
     args = p.parse_args(argv)
+    if args.users:
+        users = discover_users(load_accounts())
+        print(f"{len(users)} named Common Room users saved to {save_users(users)} "
+              f"({sum(1 for u in users if u['status'] == 'matched')} matched to an account with a website)")
+        return
     new = [] if args.no_scrape else discover()
     if args.seed:
         new += read_seed(args.seed)

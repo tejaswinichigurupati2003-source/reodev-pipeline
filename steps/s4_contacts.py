@@ -15,6 +15,7 @@ from urllib.parse import quote
 import apollo
 import hunter
 import prospeo
+import users
 import pipeline_io as io
 
 OUTPUT_FILE = "step4_contacts.json"
@@ -143,13 +144,22 @@ def fetch_people(domain, headcount):
 
 def run(domain, company=None, fresh=False):
     """Needs step2 output. Spends provider credits only if this domain was never searched (caches are permanent)."""
+    known = users.known_contacts(domain)  # named Common Room users with a found email: best leads, tier 0
     if io.exists(domain, OUTPUT_FILE) and not fresh:
-        return io.load_json(domain, OUTPUT_FILE)
+        cached = io.load_json(domain, OUTPUT_FILE)
+        have = {c["email"] for c in cached.get("contacts", [])}
+        if all(k["email"] in have for k in known):
+            return cached
     extracted = io.load_json(domain, "step2_extracted.json")
-    people, source, notes = fetch_people(domain, extracted.get("headcount"))
+    notes, people, source = [], [], "common-room-page + prospeo"
+    if not known or is_cached(domain):  # with known users we never spend credits on a search
+        people, source, notes = fetch_people(domain, extracted.get("headcount"))
     contacts, rejected = pick_contacts(people, extracted.get("headcount"))
     for c in contacts:
         c["source"] = source
+    if known:
+        contacts = (known + [c for c in contacts if c["email"] not in {k["email"] for k in known}])[:MAX_CONTACTS]
+        source = "common-room-page + prospeo" if not people else source
     result = {"domain": domain, "found": bool(contacts), "contacts": contacts, "source": source, "provider_notes": notes,
               "people_seen": len(people), "not_chosen": rejected,
               "linkedin_search": linkedin_search_url(company or extracted.get("company") or domain)}

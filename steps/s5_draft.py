@@ -60,21 +60,26 @@ def _prompt(person, extracted):
     company = {k: extracted.get(k) for k in ("company", "product_summary", "company_type", "use_case_for_intent", "headcount")}
     company["developer_signals"] = [{"signal": s["signal"], "quote": s["evidence_quote"], "page": s["source_url"]}
                                     for s in extracted.get("devrel_signals", [])]
-    values = {"persona": person.get("persona") or "go-to-market", "first_name": person["name"].split()[0],
+    persona = person.get("persona") or "go-to-market"
+    if "common room" in persona.lower():  # drafts must never mention Common Room: use a neutral role instead
+        persona = "go-to-market"
+    values = {"persona": persona, "first_name": person["name"].split()[0],
               "person": json.dumps({"name": person["name"], "title": person.get("title")}, ensure_ascii=False),
               "company": json.dumps(company, ensure_ascii=False)}
     return re.sub(r"\{(persona|first_name|person|company)\}", lambda m: values[m.group(1)], io.load_prompt("s5_email.md"))
 
 
 def run(domain, fresh=False):
-    if io.exists(domain, OUTPUT_FILE) and not fresh:
-        return io.load_json(domain, OUTPUT_FILE)
     contacts = (io.load_json(domain, "step4_contacts.json") if io.exists(domain, "step4_contacts.json") else {}).get("contacts") or []
+    drafts = {}
+    if io.exists(domain, OUTPUT_FILE) and not fresh:
+        drafts = io.load_json(domain, OUTPUT_FILE).get("drafts", {})
+        if all(c.get("email") in drafts or not (c.get("email") and c.get("name")) for c in contacts):
+            return {"domain": domain, "drafts": drafts, "sent": False}  # everyone already has a draft
     extracted, raw = io.load_json(domain, "step2_extracted.json"), io.load_json(domain, "step1_raw.json")
     sender = os.getenv("SENDER_NAME") or "[Your name]"
-    drafts = {}
     for person in contacts:
-        if not (person.get("email") and person.get("name")):
+        if not (person.get("email") and person.get("name")) or person["email"] in drafts:
             continue
         try:
             d = llm.generate_json(_prompt(person, extracted), SCHEMA, temperature=0.3)
