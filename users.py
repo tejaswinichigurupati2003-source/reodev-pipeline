@@ -13,7 +13,7 @@ import pipeline_io as io
 import prospeo
 
 CACHE = "known_users.json"
-PERSONA = "Common Room user (named on their customers page)"
+from personas import KNOWN_USER_PERSONA as PERSONA  # noqa: E402
 
 
 def load_known(domain):

@@ -1,0 +1,22 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{% block title %}Reo.Dev research{% endblock %}</title>
+<style>
+:root{--bg:#f4f4f1;--fg:#1c1c1a;--mut:#6f6f69;--card:#fff;--line:#e3e3de;--dark:#161614;--acc:#2f5bea;--warn:#a2362b}
+@media(prefers-color-scheme:dark){:root{--bg:#141413;--fg:#efefe9;--mut:#a0a09a;--card:#222220;--line:#3a3a37;--dark:#efefe9;--acc:#7c9bff;--warn:#ff9d93}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.55 system-ui,-apple-system,Segoe UI,sans-serif}
+.wrap{max-width:{% block width %}720px{% endblock %};margin:0 auto;padding:20px 16px 60px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px;margin:14px 0}
+h1{font-size:28px;line-height:1.2;margin:8px 0}h2{font-size:18px;margin:0 0 8px}h3{font-size:15px;margin:14px 0 4px}
+.mut{color:var(--mut);font-size:14px}a{color:var(--acc)}
+label{display:block;font-weight:600;margin:14px 0 4px;font-size:14px}
+input,select,textarea,button,.btn{font:inherit;color:inherit;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%}
+textarea{min-height:90px}.btn,button{width:auto;cursor:pointer;text-decoration:none;display:inline-block;background:var(--card)}
+.primary{background:var(--dark);color:var(--bg);border-color:var(--dark);font-weight:600}
+.err{background:#fdeceb;color:var(--warn);border:1px solid #f3c4bf;border-radius:10px;padding:10px 12px;margin:10px 0}
+.chk{display:flex;gap:10px;align-items:flex-start;font-weight:400}.chk input{width:auto;margin-top:5px}
+.hp{position:absolute;left:-9999px;height:0;overflow:hidden}
+.nav{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:6px}.nav a{padding:6px 12px;border:1px solid var(--line);border-radius:99px;text-decoration:none;color:var(--fg);background:var(--card);font-size:14px}
+ol,ul{padding-left:22px}li{margin:5px 0}pre{white-space:pre-wrap;font:inherit;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:12px;margin:8px 0}
+table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;padding:8px;border-bottom:1px solid var(--line);vertical-align:top}
+@media print{.noprint{display:none}body{background:#fff;color:#000}.card{border:0;padding:0}}
+</style></head><body><div class="wrap">{% block body %}{% endblock %}</div></body></html>

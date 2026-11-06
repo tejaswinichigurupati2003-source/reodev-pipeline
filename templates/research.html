@@ -1,0 +1,31 @@
+{% extends "simple.html" %}
+{% block title %}Research conversation{% endblock %}
+{% block body %}
+{% if thanks %}
+<div class="card"><h1>Thank you</h1><p>We have your details and will email you shortly to confirm a time. If you change your mind, just reply to that email.</p></div>
+{% else %}
+<h1>A 20-minute research conversation</h1>
+<p class="mut">Mesa School of Business, Business Strategy Lab</p>
+<div class="card">
+ <h2>Who we are and why we are asking</h2>
+ <p>We are students working on a strategy project about how developer-focused companies find and act on developer activity (GitHub, docs, community, product sign-ups). The case company for the project is Reo.Dev.</p>
+ <p>We would like to learn from people who do this work. It is research, not a sales call: we will ask about your tools, your process and what would make you change either. There are no right answers.</p>
+ <p class="mut">We will ask before recording anything. Notes are used in our write-up without your name or company unless you say otherwise.{% if contact %} Questions? Email <a href="mailto:{{ contact }}">{{ contact }}</a>.{% endif %}</p>
+</div>
+<form method="post" class="card" novalidate>
+ <h2>Your details</h2>
+ {% if error %}<div class="err" role="alert">{{ error }}</div>{% endif %}
+ <label for="name">Your name *</label><input id="name" name="name" required maxlength="120" autocomplete="name" value="{{ values.get('name','') }}">
+ <label for="email">Work email *</label><input id="email" name="email" type="email" required maxlength="200" autocomplete="email" value="{{ values.get('email','') }}">
+ <label for="company">Company *</label><input id="company" name="company" required maxlength="120" autocomplete="organization" value="{{ values.get('company','') }}">
+ <label for="role">Your role</label><input id="role" name="role" maxlength="120" autocomplete="organization-title" value="{{ values.get('role','') }}">
+ <label for="cr">Have you used Common Room?</label>
+ <select id="cr" name="cr_status"><option value="">Prefer not to say</option>{% for c in cr_statuses %}<option {{ 'selected' if values.get('cr_status')==c }}>{{ c }}</option>{% endfor %}</select>
+ <label for="tools">Which tools do you use to track developer or community activity? (optional)</label><textarea id="tools" name="tools" maxlength="500">{{ values.get('tools','') }}</textarea>
+ <label for="av">Days and times that suit you, with your time zone</label><textarea id="av" name="availability" maxlength="500" placeholder="e.g. Tue or Thu afternoons, India time">{{ values.get('availability','') }}</textarea>
+ <div class="hp" aria-hidden="true"><label>Leave this empty <input name="website" tabindex="-1" autocomplete="off"></label></div>
+ <label class="chk"><input type="checkbox" name="consent" value="yes" {{ 'checked' if values.get('consent')=='yes' }}> <span>I am happy to be contacted by email about scheduling this conversation. *</span></label>
+ <p><button class="primary" type="submit">Send</button></p>
+</form>
+{% endif %}
+{% endblock %}

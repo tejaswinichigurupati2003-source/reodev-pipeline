@@ -54,12 +54,13 @@ dialog input,dialog select{width:100%;font:inherit;color:inherit;background:var(
  <div class="sec">Workspace</div>
  <nav class="nav"><a class="on" href="{{ url_for('board') }}">Outreach board <span class="n">{{ total_all }}</span></a>
   <a href="{{ url_for('index') }}">List view</a><a href="{{ url_for('export_csv') }}">Download CSV</a></nav>
+ <div class="sec">Research</div>
+ <nav class="nav"><a href="{{ url_for('interview_home') }}">Interview questions</a><a href="{{ url_for('research') }}" target="_blank" rel="noopener">Research form (to send)</a><a href="{{ url_for('responses') }}">Form responses</a></nav>
  <div class="sec">Filter</div>
  <nav class="nav">
-  <a href="{{ url_for('board', email='1' if only_email else None) }}" class="{{ '' if tier else 'on' }}">All leads <span class="n">{{ total_all }}</span></a>
+  <a href="{{ url_for('board') }}" class="{{ '' if (tier or only_email) else 'on' }}">All leads <span class="n">{{ total_all }}</span></a>
   {% for t,label in [('MY','Added by you'),('A','Tier A'),('B','Tier B'),('C','Tier C')] %}
-  <a href="{{ url_for('board', tier=t, email='1' if only_email else None) }}" class="{{ 'on' if tier==t else '' }}">{{ label }} <span class="n">{{ counts.get(t,0) }}</span></a>{% endfor %}
-  <a href="{{ url_for('board', tier=tier, email=None if only_email else '1') }}" class="{{ 'on' if only_email else '' }}">Only with email</a>
+  <a href="{{ url_for('board', tier=t) }}" class="{{ 'on' if tier==t else '' }}">{{ label }} <span class="n">{{ counts.get(t,0) }}</span></a>{% endfor %}
  </nav>
  {% if not public %}<form method="post" action="{{ url_for('logout') }}" style="margin-top:18px"><input type="hidden" name="csrf" value="{{ csrf() }}"><button class="pill">Sign out</button></form>{% endif %}
 </aside>
@@ -70,7 +71,8 @@ dialog input,dialog select{width:100%;font:inherit;color:inherit;background:var(
    {% if tier %}<span class="tag t-{{ tier }}">{{ 'Added by you' if tier=='MY' else 'Tier ' ~ tier }}</span>{% endif %}
    {% if only_email %}<span class="tag t-MY">only with email</span>{% endif %}
    <a href="{{ url_for('board') }}" style="color:var(--acc);margin-left:6px">Clear filters</a></div>{% endif %}</div>
-  <button class="pill dark" data-add="not contacted">+ Add contact</button></div>
+  <div><a class="pill {{ 'dark' if only_email }}" href="{{ url_for('board', tier=tier, email=None if only_email else '1') }}">{{ 'Only with email: on' if only_email else 'Only with email' }}</a>
+  <button class="pill dark" data-add="not contacted">+ Add contact</button></div></div>
  <div class="board" id="board" data-csrf="{{ csrf() }}">
  {% for s in statuses %}{% set i = loop.index0 %}
   <section class="col" data-status="{{ s }}" style="background:var(--s{{ i }})">
@@ -88,7 +90,7 @@ dialog input,dialog select{width:100%;font:inherit;color:inherit;background:var(
       {% if l.email %}<span class="em" data-copy="{{ l.email }}" title="Click to copy">{{ l.email }}</span>{% else %}<span class="em">no email yet</span>{% endif %}
       <span>{{ (l.days ~ 'd in stage') if l.days is not none else 'new' }}</span></div>
      <div class="ft" style="margin-top:8px"><select class="mv" aria-label="Move to stage">{% for t in statuses %}<option {{ 'selected' if t==s }}>{{ t }}</option>{% endfor %}</select>
-      <span style="flex:1"></span>
+      <span style="flex:1"></span><a href="{{ url_for('interview_guide', key=l.key) }}" style="color:var(--acc);text-decoration:none;font-size:12px;margin-right:6px">Interview guide</a>
       {% if l.manual %}<form method="post" action="{{ url_for('contacts_delete') }}" onsubmit="return confirm('Remove this contact?')"><input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="key" value="{{ l.key }}"><button class="x" title="Remove">&times;</button></form>{% endif %}</div>
     </div>
    {% endfor %}</div>

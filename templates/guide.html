@@ -1,0 +1,23 @@
+{% extends "simple.html" %}
+{% block title %}Interview guide: {{ g.name }}{% endblock %}
+{% block body %}
+<div class="nav noprint"><a href="{{ url_for('board') }}">Back to board</a><a href="{{ url_for('interview_home') }}">All questions</a>
+ <a href="{{ url_for('interview_guide', key=lead.key, format='md') }}">Download .md</a><a href="#" onclick="window.print();return false">Print</a></div>
+<h1>{{ g.name }}</h1>
+<p class="mut">{{ g.title }}{% if g.title %} at {% endif %}{{ g.company }} &middot; role group: {{ g.persona }}{% if lead.email %} &middot; {{ lead.email }}{% endif %}</p>
+{% if g.context %}<div class="card"><h2>Context (internal, do not read out)</h2><ul>{% for c in g.context %}<li>{{ c }}</li>{% endfor %}</ul></div>{% endif %}
+
+<div class="card noprint"><h2>Invitation to send</h2>
+ <p class="mut">Honest about who you are and that Reo.Dev is the case company. It points to your research form, so people can pick a time or say no.</p>
+ <h3>Email</h3><div><b>{{ subject }}</b></div><pre id="mail">{{ body }}</pre>
+ <button class="btn" data-copy="mail">Copy email</button>
+ {% if lead.email and '@' in lead.email and ' ' not in lead.email %}<a class="btn primary" href="mailto:{{ lead.email }}?subject={{ subject|urlencode }}&amp;body={{ body|urlencode }}">Open in my email app (you press send)</a>{% endif %}
+ <h3>LinkedIn message</h3><pre id="li">{{ linkedin }}</pre><button class="btn" data-copy="li">Copy LinkedIn message</button>
+ <p class="mut">Form link: <a href="{{ url_for('research', _external=True) }}">{{ url_for('research', _external=True) }}</a></p></div>
+
+{% for head, qs in g.sections %}<div class="card"><h2>{{ head }}</h2><ol>{% for q in qs %}<li>{{ q }}</li>{% endfor %}</ol></div>{% endfor %}
+<div class="card"><h2>Branch by usage</h2>{% for k, qs in g.branches.items() %}<h3>{{ k }}</h3><ul>{% for q in qs %}<li>{{ q }}</li>{% endfor %}</ul>{% endfor %}</div>
+<div class="card"><h2>For their role: {{ g.persona }}</h2><ul>{% for q in g.persona_questions %}<li>{{ q }}</li>{% endfor %}</ul><p class="mut">{{ g.signoff }}</p></div>
+<script>document.addEventListener('click',function(e){var b=e.target.closest('[data-copy]');if(!b)return;
+ navigator.clipboard.writeText(document.getElementById(b.dataset.copy).innerText).then(function(){var t=b.textContent;b.textContent='Copied';setTimeout(function(){b.textContent=t},1200)})});</script>
+{% endblock %}

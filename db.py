@@ -68,6 +68,8 @@ def init(db):
     db.execute(f"CREATE TABLE IF NOT EXISTS leads (key TEXT PRIMARY KEY, {cols})")
     db.execute("CREATE TABLE IF NOT EXISTS manual_leads (key TEXT PRIMARY KEY, company TEXT, domain TEXT, contact_name TEXT, "
                "contact_title TEXT, email TEXT, created_at TEXT)")
+    db.execute("CREATE TABLE IF NOT EXISTS research_responses (id TEXT PRIMARY KEY, created_at TEXT, name TEXT, email TEXT, company TEXT, "
+               "role TEXT, cr_status TEXT, tools TEXT, availability TEXT, consent TEXT)")
     db.execute("CREATE TABLE IF NOT EXISTS tracker (key TEXT PRIMARY KEY, contact_status TEXT, channel TEXT, last_touch TEXT, "
                "reply TEXT, interview_done TEXT, notes TEXT, updated_at TEXT)")
 
@@ -188,3 +190,45 @@ def update_tracker(key, fields, now):
         db.execute(f"INSERT INTO tracker (key, {', '.join(cols)}) VALUES ({', '.join('?' * (len(cols) + 1))}) "
                    f"ON CONFLICT (key) DO UPDATE SET {', '.join(f'{c} = excluded.{c}' for c in cols)}",
                    [key] + [clean[k] for k in TRACKER_FIELDS] + [now])
+
+
+CR_STATUSES = ["I use it now", "I used it before", "I looked at it", "I have not used it"]
+MAX_RESPONSES_PER_HOUR = 30  # a flood guard for the public form
+
+
+def add_response(f, now):
+    """Save one research-form answer. Raises ValueError with a message that is safe to show the visitor."""
+    import re
+    import uuid
+    from datetime import datetime, timedelta
+    clean = {k: (f.get(k) or "").strip() for k in ("name", "email", "company", "role", "cr_status", "tools", "availability")}
+    if not clean["name"] or not clean["company"]:
+        raise ValueError("Please fill in your name and company.")
+    if not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", clean["email"]):
+        raise ValueError("Please enter a valid email address.")
+    if f.get("consent") != "yes":
+        raise ValueError("Please tick the box so we know you are happy to be contacted.")
+    for k, n in (("name", 120), ("email", 200), ("company", 120), ("role", 120), ("tools", 500), ("availability", 500)):
+        clean[k] = clean[k][:n]
+    if clean["cr_status"] not in CR_STATUSES:
+        clean["cr_status"] = ""
+    with connect() as db:
+        init(db)
+        hour_ago = (datetime.fromisoformat(now) - timedelta(hours=1)).isoformat(timespec="seconds")
+        if db.rows("SELECT COUNT(*) AS n FROM research_responses WHERE created_at > ?", [hour_ago])[0]["n"] >= MAX_RESPONSES_PER_HOUR:
+            raise ValueError("We are getting a lot of replies right now. Please try again in a little while.")
+        day_ago = (datetime.fromisoformat(now) - timedelta(days=1)).isoformat(timespec="seconds")
+        if db.rows("SELECT id FROM research_responses WHERE LOWER(email) = ? AND created_at > ?", [clean["email"].lower(), day_ago]):
+            return None  # same person sent it twice: say thanks, store once
+        rid = uuid.uuid4().hex[:12]
+        db.execute("INSERT INTO research_responses (id, created_at, name, email, company, role, cr_status, tools, availability, consent) "
+                   "VALUES (?,?,?,?,?,?,?,?,?,?)",
+                   [rid, now, clean["name"], clean["email"], clean["company"], clean["role"], clean["cr_status"], clean["tools"],
+                    clean["availability"], "yes"])
+    return rid
+
+
+def list_responses():
+    with connect() as db:
+        init(db)
+        return db.rows("SELECT * FROM research_responses ORDER BY created_at DESC")

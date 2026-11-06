@@ -11,13 +11,16 @@ import secrets
 from datetime import datetime, timezone
 
 from dotenv import load_dotenv
+from werkzeug.middleware.proxy_fix import ProxyFix
 from flask import Flask, abort, redirect, render_template, request, session, url_for
 
 import db
+import interview
 
 load_dotenv()
 
 app = Flask(__name__)
+app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)  # behind Vercel: build correct https links
 PASSWORD = os.getenv("DASHBOARD_PASSWORD") or ""
 PUBLIC = os.getenv("DASHBOARD_PUBLIC") == "1"  # opt-in: anyone with the link can view AND edit the tracker
 app.secret_key = os.getenv("SECRET_KEY") or hashlib.sha256(("dash:" + PASSWORD).encode()).hexdigest()
@@ -38,7 +41,7 @@ def gate():
         return None
     if not PASSWORD:
         return "Dashboard disabled: set DASHBOARD_PASSWORD (or DASHBOARD_PUBLIC=1) in the environment.", 503
-    if request.endpoint in ("login", "static"):
+    if request.endpoint in ("login", "static", "research", "research_thanks"):  # the research form must stay reachable by the people we invite
         return None
     if not session.get("ok"):
         return redirect(url_for("login"))
@@ -160,6 +163,93 @@ def tracker_status():
     except ValueError:
         abort(400)
     return {"ok": True}
+
+
+def _find_lead(key):
+    for l in db.list_leads():
+        if l["key"] == key:
+            return l
+    abort(404)
+
+
+@app.route("/interview")
+def interview_home():
+    return render_template("interview.html", core=interview.CORE, usage=interview.USAGE, persona=interview.PERSONA)
+
+
+@app.route("/interview/guide")
+def interview_guide():
+    lead = _find_lead(request.args.get("key", ""))
+    guide = interview.build_guide(lead)
+    sender = os.getenv("SENDER_NAME") or "[Your name]"
+    subject, body, linkedin = interview.invite(lead, url_for("research", _external=True), sender)
+    if request.args.get("format") == "md":
+        name = "".join(ch for ch in guide["name"] if ch.isalnum()) or "guide"
+        return app.response_class(interview.to_markdown(guide), mimetype="text/markdown",
+                                  headers={"Content-Disposition": f"attachment; filename=interview-{name}.md"})
+    return render_template("guide.html", g=guide, lead=lead, subject=subject, body=body, linkedin=linkedin)
+
+
+@app.route("/research", methods=["GET", "POST"])
+def research():
+    """Public form we send to the people we want to interview. No sign-in, no cookies needed."""
+    values, error = {}, None
+    if request.method == "POST":
+        values = request.form.to_dict()
+        if values.get("website"):  # hidden field: only bots fill it. Pretend it worked.
+            return redirect(url_for("research_thanks"))
+        try:
+            db.add_response(values, datetime.now(timezone.utc).isoformat(timespec="seconds"))
+            return redirect(url_for("research_thanks"))
+        except ValueError as exc:
+            error = str(exc)
+    return render_template("research.html", values=values, error=error, cr_statuses=db.CR_STATUSES,
+                           contact=os.getenv("RESEARCH_CONTACT_EMAIL") or ""), (400 if error else 200)
+
+
+@app.route("/research/thanks")
+def research_thanks():
+    return render_template("research.html", thanks=True, values={}, error=None, cr_statuses=[], contact=os.getenv("RESEARCH_CONTACT_EMAIL") or "")
+
+
+def _responses_allowed():
+    """Respondents' details are personal data: even in public mode they need the secret RESPONSES_KEY."""
+    key = os.getenv("RESPONSES_KEY") or ""
+    if not key:
+        return False
+    if session.get("resp_ok"):
+        return True
+    if hmac.compare_digest(request.args.get("key", "").encode(), key.encode()):
+        session["resp_ok"] = True
+        return True
+    return False
+
+
+@app.route("/responses")
+def responses():
+    if not _responses_allowed():
+        abort(404)
+    if request.args.get("key"):
+        return redirect(url_for("responses"))  # drop the key from the address bar
+    return render_template("responses.html", rows=db.list_responses())
+
+
+@app.route("/responses.csv")
+def responses_csv():
+    if not _responses_allowed():
+        abort(404)
+    import csv
+    import io as _io
+
+    import export as _export
+    cols = ["created_at", "name", "email", "company", "role", "cr_status", "tools", "availability"]
+    buf = _io.StringIO()
+    w = csv.DictWriter(buf, fieldnames=cols, extrasaction="ignore")
+    w.writeheader()
+    for r in db.list_responses():
+        w.writerow({c: _export._safe(r.get(c)) for c in cols})
+    return app.response_class("﻿" + buf.getvalue(), mimetype="text/csv",
+                              headers={"Content-Disposition": "attachment; filename=research-responses.csv"})
 
 
 @app.route("/export.csv")
