@@ -150,3 +150,37 @@ def test_filters_csv_and_inline_status(monkeypatch):
     c.post("/tracker", data={"csrf": "tok", "key": "acme.dev|dana@acme.dev", "contact_status": "replied"})
     assert "No leads match" in c.get("/?status=queued").get_data(as_text=True)
     assert "dana@acme.dev" in c.get("/?status=replied").get_data(as_text=True)
+
+
+def test_board_drag_status_and_manual_contacts(monkeypatch):
+    monkeypatch.setenv("DASHBOARD_PUBLIC", "1")
+    import app as appmod
+    appmod = importlib.reload(appmod)
+    _seed_db()
+    c = appmod.app.test_client()
+    page = c.get("/board").get_data(as_text=True)
+    assert "Outreach board" in page and 'data-key="acme.dev|dana@acme.dev"' in page and "+ Add contact" in page
+    with c.session_transaction() as s:
+        s["csrf"] = "tok"
+    ok = lambda **kw: c.post("/tracker/status", json=kw, headers={"X-CSRF": "tok"}).status_code
+    assert c.post("/tracker/status", json={"key": "acme.dev|dana@acme.dev", "status": "replied"}).status_code == 400   # no CSRF
+    db.update_tracker("acme.dev|dana@acme.dev", {"contact_status": "contacted", "notes": "keep me"}, "now")
+    assert ok(key="acme.dev|dana@acme.dev", status="replied") == 200
+    assert ok(key="acme.dev|dana@acme.dev", status="bogus") == 400 and ok(key="nope|x", status="replied") == 404
+    row = [l for l in db.list_leads() if l["email"] == "dana@acme.dev"][0]
+    assert (row["contact_status"], row["notes"]) == ("replied", "keep me")      # drag changes only the stage
+    # manual contacts
+    assert c.post("/contacts/add", data={"company": "Notion", "email": "a@notion.so"}).status_code == 400            # CSRF
+    r = c.post("/contacts/add", data={"csrf": "tok", "company": "Notion", "name": "Erica A", "email": "erica@notion.so", "status": "queued"})
+    assert r.status_code == 302
+    assert c.post("/contacts/add", data={"csrf": "tok", "company": "", "email": "x"}).status_code == 400
+    assert c.post("/contacts/add", data={"csrf": "tok", "company": "Bad", "email": "not-an-email"}).status_code == 400
+    mine = [l for l in db.list_leads() if l.get("manual")]
+    assert len(mine) == 1 and mine[0]["contact_status"] == "queued" and mine[0]["tier"] == "MY"
+    assert ok(key=mine[0]["key"], status="contacted") == 200
+    _seed_db()                                                                         # a re-sync keeps manual contacts
+    assert len([l for l in db.list_leads() if l.get("manual")]) == 1
+    assert "Notion" in c.get("/board?tier=MY").get_data(as_text=True)
+    assert c.post("/contacts/delete", data={"csrf": "tok", "key": "acme.dev|dana@acme.dev"}).status_code == 404   # synced leads cannot be deleted
+    assert c.post("/contacts/delete", data={"csrf": "tok", "key": mine[0]["key"]}).status_code == 302
+    assert not [l for l in db.list_leads() if l.get("manual")]

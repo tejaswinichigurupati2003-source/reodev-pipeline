@@ -89,7 +89,7 @@ def logout():
 @app.route("/")
 def index():
     tier = request.args.get("tier") or None
-    if tier not in (None, "A", "B", "C", "SKIP"):
+    if tier not in (None, "A", "B", "C", "SKIP", "MY"):
         tier = None
     search = (request.args.get("q") or "").strip()[:80] or None
     only_email = request.args.get("email") == "1"
@@ -104,6 +104,62 @@ def index():
              "replied": sum(1 for l in everyone if l["contact_status"] in ("replied", "interview booked", "interview done"))}
     return render_template("index.html", public=PUBLIC, leads=leads, tier=tier, q=search or "", counts=counts, statuses=db.STATUSES,
                            only_email=only_email, status=status, stats=stats)
+
+
+@app.route("/board")
+def board():
+    tier = request.args.get("tier") if request.args.get("tier") in ("A", "B", "C", "SKIP", "MY") else None
+    only_email = request.args.get("email") == "1"
+    leads = db.list_leads(tier, None, only_email)
+    now = datetime.now(timezone.utc)
+    cols = {s: [] for s in db.STATUSES}
+    for l in leads:
+        try:
+            l["days"] = (now - datetime.fromisoformat(l["updated_at"])).days if l.get("updated_at") else None
+        except ValueError:
+            l["days"] = None
+        cols[l["contact_status"] if l["contact_status"] in cols else "not contacted"].append(l)
+    counts = {}
+    for l in db.list_leads():
+        counts[l["tier"]] = counts.get(l["tier"], 0) + 1
+    return render_template("board.html", public=PUBLIC, cols=cols, statuses=db.STATUSES, tier=tier, only_email=only_email,
+                           total=len(leads), counts=counts, total_all=sum(counts.values()))
+
+
+@app.post("/contacts/add")
+def contacts_add():
+    """Add a contact you found yourself (it stays across syncs)."""
+    _check_csrf()
+    try:
+        db.add_manual(request.form, datetime.now(timezone.utc).isoformat(timespec="seconds"))
+    except ValueError as exc:
+        return f"Could not add the contact: {exc}", 400
+    return redirect(url_for("board"))
+
+
+@app.post("/contacts/delete")
+def contacts_delete():
+    _check_csrf()
+    try:
+        db.delete_manual(request.form.get("key", ""))
+    except KeyError:
+        abort(404)
+    return redirect(url_for("board"))
+
+
+@app.post("/tracker/status")
+def tracker_status():
+    """JSON endpoint for drag-and-drop: {key, status}. CSRF token comes in the X-CSRF header."""
+    if not hmac.compare_digest(request.headers.get("X-CSRF", ""), session.get("csrf", "x")):
+        abort(400)
+    data = request.get_json(silent=True) or {}
+    try:
+        db.set_status(str(data.get("key", "")), str(data.get("status", "")), datetime.now(timezone.utc).isoformat(timespec="seconds"))
+    except KeyError:
+        abort(404)
+    except ValueError:
+        abort(400)
+    return {"ok": True}
 
 
 @app.route("/export.csv")

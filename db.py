@@ -66,6 +66,8 @@ class _DB:
 def init(db):
     cols = ", ".join(f"{c} {'INTEGER' if c in INT_COLUMNS else 'TEXT'}" for c in LEAD_COLUMNS)
     db.execute(f"CREATE TABLE IF NOT EXISTS leads (key TEXT PRIMARY KEY, {cols})")
+    db.execute("CREATE TABLE IF NOT EXISTS manual_leads (key TEXT PRIMARY KEY, company TEXT, domain TEXT, contact_name TEXT, "
+               "contact_title TEXT, email TEXT, created_at TEXT)")
     db.execute("CREATE TABLE IF NOT EXISTS tracker (key TEXT PRIMARY KEY, contact_status TEXT, channel TEXT, last_touch TEXT, "
                "reply TEXT, interview_done TEXT, notes TEXT, updated_at TEXT)")
 
@@ -89,11 +91,13 @@ def list_leads(tier=None, search=None, only_email=False, status=None):
     with connect() as db:
         init(db)
         sql = ("SELECT l.*, COALESCE(t.contact_status, 'not contacted') AS contact_status, t.channel, t.last_touch, "
-               "t.reply, t.interview_done, t.notes FROM leads l LEFT JOIN tracker t ON t.key = l.key")
+               "t.reply, t.interview_done, t.notes, t.updated_at FROM leads l LEFT JOIN tracker t ON t.key = l.key")
         where, params = [], []
-        if tier:
+        if tier and tier != "MY":
             where.append("l.tier = ?")
             params.append(tier)
+        if tier == "MY":
+            where.append("1 = 0")
         if search:
             where.append("(LOWER(l.company) LIKE ? OR LOWER(l.domain) LIKE ? OR LOWER(COALESCE(l.contact_name, '')) LIKE ?)")
             params += [f"%{search.lower()}%"] * 3
@@ -104,7 +108,71 @@ def list_leads(tier=None, search=None, only_email=False, status=None):
             params.append(status)
         if where:
             sql += " WHERE " + " AND ".join(where)
-        return db.rows(sql + " ORDER BY l.rank", params)
+        rows = db.rows(sql + " ORDER BY l.rank", params)
+        manual = []
+        if tier in (None, "MY"):
+            for m in db.rows("SELECT m.*, COALESCE(t.contact_status, 'not contacted') AS contact_status, t.channel, t.last_touch, "
+                             "t.reply, t.interview_done, t.notes, t.updated_at FROM manual_leads m LEFT JOIN tracker t ON t.key = m.key "
+                             "ORDER BY m.created_at DESC"):
+                q = (search or "").lower()
+                if q and q not in f"{m['company']} {m['domain']} {m['contact_name']}".lower():
+                    continue
+                if only_email and not m["email"]:
+                    continue
+                if status in STATUSES and m["contact_status"] != status:
+                    continue
+                manual.append({**{c: None for c in LEAD_COLUMNS}, **m, "rank": 0, "tier": "MY", "account_status": "added by you",
+                               "how_identified": "Added manually", "manual": True})
+        return manual + rows
+
+
+def _exists(db, key):
+    return bool(db.rows("SELECT key FROM leads WHERE key = ?", [key]) or db.rows("SELECT key FROM manual_leads WHERE key = ?", [key]))
+
+
+def add_manual(fields, now):
+    """Add a contact you found yourself. Survives every sync. Returns its key."""
+    import re
+    import uuid
+    company = (fields.get("company") or "").strip()[:120]
+    if not company:
+        raise ValueError("company is required")
+    email = (fields.get("email") or "").strip()[:200]
+    if email and not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", email):
+        raise ValueError("that does not look like an email address")
+    key = "manual:" + uuid.uuid4().hex[:12]
+    with connect() as db:
+        init(db)
+        db.execute("INSERT INTO manual_leads (key, company, domain, contact_name, contact_title, email, created_at) VALUES (?,?,?,?,?,?,?)",
+                   [key, company, (fields.get("domain") or "").strip().lower()[:120], (fields.get("name") or "").strip()[:120],
+                    (fields.get("title") or "").strip()[:120], email, now])
+    status = fields.get("status")
+    if status in STATUSES and status != "not contacted":
+        set_status(key, status, now)
+    return key
+
+
+def delete_manual(key):
+    if not key.startswith("manual:"):
+        raise KeyError(key)
+    with connect() as db:
+        init(db)
+        db.execute("DELETE FROM manual_leads WHERE key = ?", [key])
+        db.execute("DELETE FROM tracker WHERE key = ?", [key])
+
+
+def set_status(key, status, now):
+    """Change only the stage of one lead (used by drag-and-drop). Other tracker fields are kept."""
+    if status not in STATUSES:
+        raise ValueError(status)
+    with connect() as db:
+        init(db)
+        if not _exists(db, key):
+            raise KeyError(key)
+        db.execute("INSERT INTO tracker (key, contact_status, channel, last_touch, reply, interview_done, notes, updated_at) "
+                   "VALUES (?, ?, '', '', '', '', '', ?) "
+                   "ON CONFLICT (key) DO UPDATE SET contact_status = excluded.contact_status, updated_at = excluded.updated_at",
+                   [key, status, now])
 
 
 def update_tracker(key, fields, now):
@@ -114,7 +182,7 @@ def update_tracker(key, fields, now):
         clean["contact_status"] = "not contacted"
     with connect() as db:
         init(db)
-        if not db.rows("SELECT key FROM leads WHERE key = ?", [key]):
+        if not _exists(db, key):
             raise KeyError(key)
         cols = TRACKER_FIELDS + ["updated_at"]
         db.execute(f"INSERT INTO tracker (key, {', '.join(cols)}) VALUES ({', '.join('?' * (len(cols) + 1))}) "
