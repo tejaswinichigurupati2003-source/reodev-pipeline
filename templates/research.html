@@ -78,7 +78,8 @@ textarea{min-height:140px;resize:vertical}input:focus,textarea:focus{outline:non
 .spin{display:inline-block;width:15px;height:15px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px;margin-right:8px}@keyframes sp{to{transform:rotate(360deg)}}
 #confetti{position:fixed;inset:0;pointer-events:none;z-index:60}
 .credit{text-align:center;color:var(--mut);font-size:13px;margin-top:22px}
-@media(max-width:640px){.acts li .alabel{display:none}.acts li[data-state=current] .alabel{display:inline}.acts li+li:before{width:12px;margin:0 5px}}
+@media(max-width:640px){.barrow{gap:10px}.acts li .alabel{display:none}.acts li[data-state=current] .alabel{display:inline;max-width:112px;overflow:hidden;text-overflow:ellipsis}
+ .acts li+li:before{flex:none;width:8px;margin:0 3px}.ring{width:18px;height:18px}.acts li{gap:6px}}
 </style></head><body>
 {% if thanks %}
 <main class="wrap"><div class="done"><div class="tick" aria-hidden="true">&#10003;</div><h1 style="font-size:40px;margin:0 0 10px">Thank you!</h1>
