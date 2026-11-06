@@ -79,6 +79,26 @@ def test_rate_limit_retries_then_fails(monkeypatch):
     assert len(n) == 3
 
 
+def test_network_error_is_retried_then_succeeds(monkeypatch):
+    import requests
+    n = []
+
+    def flaky(path, body):
+        n.append(1)
+        if len(n) < 3:
+            raise requests.ConnectionError("dns")
+        return 200, {"error": False, "results": []}
+    monkeypatch.setattr(prospeo, "_request", flaky)
+    assert prospeo.search("x.dev") == [] and len(n) == 3
+
+
+def test_persistent_network_error_becomes_prospeo_error(monkeypatch):
+    import requests
+    monkeypatch.setattr(prospeo, "_request", lambda p, b: (_ for _ in ()).throw(requests.ConnectionError("dns")))
+    with pytest.raises(prospeo.ProspeoError, match="network error"):
+        prospeo.search("x.dev")
+
+
 def test_chain_falls_through_to_hunter_when_prospeo_out_of_credits(monkeypatch):
     monkeypatch.setenv("HUNTER_API_KEY", "k")
     monkeypatch.setattr(prospeo, "_request", lambda p, b: (400, {"error": True, "error_code": "INSUFFICIENT_CREDITS"}))

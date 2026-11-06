@@ -63,7 +63,13 @@ def _call(path, body, ok_errors=()):
     """Returns the parsed answer, or {} when the error_code is in ok_errors (a normal 'nothing found')."""
     last = None
     for attempt in range(MAX_RETRIES + 1):
-        status, data = _request(path, body)
+        try:
+            status, data = _request(path, body)
+        except requests.RequestException as exc:  # network trouble (DNS, timeout): retry like a server error
+            status, data, last = None, {}, f"network error: {type(exc).__name__}"
+            if attempt < MAX_RETRIES:
+                _sleep(3 * (attempt + 1))
+            continue
         if status == 200 and not data.get("error"):
             return data
         code = data.get("error_code")
