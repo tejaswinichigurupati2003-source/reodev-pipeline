@@ -1,0 +1,62 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{% block title %}Reo.Dev outreach{% endblock %}</title>
+<style>
+:root{--bg1:#e9edf2;--bg2:#f3f1e4;--fg:#151513;--mut:#7a7a74;--card:#fff;--line:#e6e6e1;--side:#fff;--dark:#161614;--acc:#2f5bea;--a:#1b7f4d;--b:#a86a00;--c:#7a7a74;--warn:#a2362b;
+ --s0:#eef2f8;--s1:#f3effa;--s2:#fdf6e1;--s3:#fdeceb;--s4:#e8edfc;--s5:#e6f4ea;--s6:#f1f1ee;--s7:#f6efe8;
+ --h0:#1d3b8b;--h1:#5b2a9c;--h2:#8a6200;--h3:#a2362b;--h4:#2447b8;--h5:#1b6e3e;--h6:#55554f;--h7:#7a4b1f}
+@media(prefers-color-scheme:dark){:root{--bg1:#101113;--bg2:#15160f;--fg:#efefe9;--mut:#9a9a93;--card:#242422;--line:#3a3a37;--side:#1c1c1a;--dark:#efefe9;--acc:#7c9bff;--a:#4cc38a;--b:#e0a43a;--warn:#ff9d93;
+ --s0:#1b2230;--s1:#241d33;--s2:#2d2815;--s3:#33201f;--s4:#1b2338;--s5:#172a1f;--s6:#242422;--s7:#2c241b;
+ --h0:#9db5ff;--h1:#c9a6ff;--h2:#f0c868;--h3:#ff9d93;--h4:#9db5ff;--h5:#7fdca0;--h6:#bdbdb6;--h7:#e6b98a}}
+*{box-sizing:border-box}html,body{height:100%}
+body{margin:0;font:14px/1.45 system-ui,-apple-system,Segoe UI,sans-serif;color:var(--fg);background:linear-gradient(160deg,var(--bg1),var(--bg2));background-attachment:fixed}
+.app{display:grid;grid-template-columns:240px minmax(0,1fr);gap:16px;padding:16px;min-height:100%}
+.side{background:var(--side);border-radius:20px;padding:18px 14px;position:sticky;top:16px;align-self:start;max-height:calc(100vh - 32px);overflow:auto}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:17px;margin:2px 6px 16px}.logo{width:34px;height:34px;border-radius:10px;background:var(--dark);color:var(--bg1);display:grid;place-items:center;font-weight:800}
+.sec{font-size:11px;letter-spacing:.12em;color:var(--mut);margin:16px 8px 6px;text-transform:uppercase}
+.nav a{display:flex;justify-content:space-between;align-items:center;padding:9px 10px;border-radius:11px;color:var(--fg);text-decoration:none;margin-bottom:2px}
+.nav a:hover{background:var(--s0)}.nav a.on{background:var(--dark);color:var(--bg1)}.nav .n{font-size:12px;color:var(--mut)}.nav a.on .n{color:inherit;opacity:.7}
+main{min-width:0}
+.top{background:var(--card);border-radius:18px;padding:12px 18px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;color:var(--mut)}.top b{color:var(--fg);font-weight:600}
+.head{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;margin:18px 4px 16px}
+h1{font-size:34px;letter-spacing:-.02em;margin:0;line-height:1.15}h2{font-size:18px;margin:0 0 8px}h3{font-size:15px;margin:14px 0 4px}.sub,.mut{color:var(--mut)}.sub{margin-top:2px}.mut{font-size:13px}
+a{color:var(--acc)}
+.pill,button.pill{background:var(--card);border:1px solid var(--line);border-radius:99px;padding:9px 16px;color:var(--fg);text-decoration:none;cursor:pointer;font:inherit;display:inline-block}
+.pill.dark{background:var(--dark);color:var(--bg1);border-color:var(--dark);font-weight:600}
+.btn{display:inline-block;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 14px;color:var(--fg);text-decoration:none;cursor:pointer;font:inherit}.btn.primary{background:var(--dark);color:var(--bg1);border-color:var(--dark);font-weight:600}
+input,select,textarea{font:inherit;color:inherit;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.panel{background:var(--card);border-radius:18px;padding:18px 20px;margin:0 0 14px;box-shadow:0 1px 2px #0000000d}
+.panel ol,.panel ul{padding-left:22px}.panel li{margin:5px 0}
+pre{white-space:pre-wrap;font:inherit;background:var(--s0);border-radius:12px;padding:12px;margin:8px 0}
+table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+.tag{font-size:11px;font-weight:700;padding:2px 9px;border-radius:99px;background:var(--s4);white-space:nowrap}
+.t-A{color:var(--a);background:var(--s5)}.t-B{color:var(--b);background:var(--s2)}.t-C,.t-SKIP{color:var(--c);background:var(--s6)}.t-MY{color:var(--h1);background:var(--s1)}
+.toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:var(--dark);color:var(--bg1);padding:9px 16px;border-radius:99px;display:none;z-index:20}
+@media(max-width:860px){.app{grid-template-columns:1fr}.side{position:static;max-height:none}h1{font-size:28px}}
+@media print{.side,.top,.noprint{display:none!important}.app{display:block;padding:0}body{background:#fff;color:#000}.panel{box-shadow:none;border:0}}
+{% block css %}{% endblock %}
+</style></head><body><div class="app">
+<aside class="side">
+ <div class="brand"><span class="logo">R</span>Reo.Dev</div>
+ <div class="sec">Workspace</div>
+ <nav class="nav">
+  <a href="{{ url_for('board') }}" class="{{ 'on' if active=='board' }}">Outreach board <span class="n">{{ nav_total }}</span></a>
+  <a href="{{ url_for('index') }}" class="{{ 'on' if active=='list' }}">List view</a>
+  <a href="{{ url_for('export_csv') }}">Download CSV</a></nav>
+ <div class="sec">Filter the board</div>
+ <nav class="nav">
+  {% for t,label in [('MY','Added by you'),('A','Tier A'),('B','Tier B'),('C','Tier C')] %}
+  <a href="{{ url_for('board', tier=t) }}" class="{{ 'on' if active=='board' and tier==t }}">{{ label }} <span class="n">{{ nav_counts.get(t,0) }}</span></a>{% endfor %}
+ </nav>
+ <div class="sec">Research</div>
+ <nav class="nav"><a href="{{ url_for('interview_home') }}" class="{{ 'on' if active=='interview' }}">Interview questions</a>
+  <a href="{{ url_for('research') }}" target="_blank" rel="noopener">Research form (to send)</a>
+  <a href="{{ url_for('responses') }}" class="{{ 'on' if active=='responses' }}">Form responses</a></nav>
+ {% if not public %}<form method="post" action="{{ url_for('logout') }}" style="margin-top:18px"><input type="hidden" name="csrf" value="{{ csrf() }}"><button class="pill">Sign out</button></form>{% endif %}
+</aside>
+<main>
+ <div class="top"><span>Workspace / <b>{% block crumb %}{% endblock %}</b></span><span>Reo.Dev &middot; Common Room switch campaign</span></div>
+ {% block content %}{% endblock %}
+</main></div>
+<div class="toast" id="toast"></div>
+{% block scripts %}{% endblock %}
+</body></html>

@@ -1,17 +1,20 @@
-{% extends "simple.html" %}
+{% extends "shell.html" %}
+{% set active = 'interview' %}
 {% block title %}Interview questions{% endblock %}
-{% block body %}
-<div class="nav noprint"><a href="{{ url_for('board') }}">Board</a><a href="{{ url_for('research') }}" target="_blank" rel="noopener">Research form</a><a href="{{ url_for('responses') }}">Responses</a><a href="#" onclick="window.print();return false">Print</a></div>
-<h1>Interview questions</h1>
-<p class="mut">About 30 minutes. Built from the five key questions in the brief: where the opportunity is, what might change, why Reo.Dev, how to reach and convert, and how it becomes revenue. For one person's version with their company filled in, open <b>Interview guide</b> on their card on the board.</p>
-<div class="card"><h2>Ground rules</h2><ul>
+{% block crumb %}Interview questions{% endblock %}
+{% block content %}
+<div class="head"><div><h1>Interview questions</h1>
+ <div class="sub">About 30 minutes. Built from the five key questions in the brief: where the opportunity is, what might change, why Reo.Dev, how to reach and convert, and how it becomes revenue.</div></div>
+ <div class="noprint"><a class="pill" href="#" onclick="window.print();return false">Print</a> <a class="pill dark" href="{{ url_for('research') }}" target="_blank" rel="noopener">Open the research form</a></div></div>
+<div class="panel"><h2>For one person's version</h2><p>Open <b>Interview guide</b> on their card on the <a href="{{ url_for('board') }}">board</a>. It fills in their name and company, picks their role's questions, and includes the invitation to send.</p></div>
+<div class="panel"><h2>Ground rules</h2><ul>
  <li>Never mention Zoom, an acquisition, or what any vendor will do. Ask about change in general and about their own past, so what you hear is evidence, not agreement.</li>
  <li>Ask one open question at a time, then stay quiet. Ask "can you give a recent example?"</li>
  <li>This is research, not a pitch. Ask permission before recording or quoting.</li>
  <li>Write down their exact words for the insights document (claim, evidence, so-what).</li></ul></div>
-{% for head, qs in core %}<div class="card"><h2>{{ head }}</h2><ol>{% for q in qs %}<li>{{ q }}</li>{% endfor %}</ol></div>{% endfor %}
-<div class="card"><h2>Branch by usage (after question 2b)</h2>
+{% for head, qs in core %}<div class="panel"><h2>{{ head }}</h2><ol>{% for q in qs %}<li>{{ q }}</li>{% endfor %}</ol></div>{% endfor %}
+<div class="panel"><h2>Branch by usage (after question 2b)</h2>
 {% for k, qs in usage.items() %}<h3>{{ k }}</h3><ul>{% for q in qs %}<li>{{ q }}</li>{% endfor %}</ul>{% endfor %}</div>
-<div class="card"><h2>Add-ons by role</h2>
+<div class="panel"><h2>Add-ons by role</h2>
 {% for k, qs in persona.items() %}<h3>{{ k }}</h3><ul>{% for q in qs %}<li>{{ q }}</li>{% endfor %}</ul>{% endfor %}</div>
 {% endblock %}

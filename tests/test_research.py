@@ -143,3 +143,23 @@ def test_csv_neutralises_formulas(monkeypatch):
     c.post("/research", data={**GOOD, "company": "=HYPERLINK(1)"})
     c.get("/responses?key=k")
     assert "'=HYPERLINK(1)" in c.get("/responses.csv").get_data(as_text=True)
+
+
+def test_every_page_shares_the_same_shell(monkeypatch):
+    c = make_client(monkeypatch, DASHBOARD_PUBLIC="1", RESPONSES_KEY="k")
+    c.get("/responses?key=k")
+    for url in ("/board", "/list", "/interview", "/interview/guide?key=acme.dev|dana@acme.dev", "/responses"):
+        r = c.get(url)
+        html = r.get_data(as_text=True)
+        assert r.status_code == 200, url
+        assert "class=\"side\"" in html and "Outreach board" in html and "href=\"/interview\"" in html, url
+        assert "Tier A" in html and "Added by you" in html, url
+    home = c.get("/", follow_redirects=True)
+    assert home.status_code == 200 and "drag a card" in home.get_data(as_text=True)
+
+
+def test_page_survives_a_database_hiccup(monkeypatch):
+    c = make_client(monkeypatch, DASHBOARD_PUBLIC="1")
+    import app as appmod
+    monkeypatch.setattr(appmod.db, "list_leads", lambda *a, **k: (_ for _ in ()).throw(RuntimeError("db down")))
+    assert c.get("/interview").status_code == 200  # sidebar numbers fall back to zero instead of an error page

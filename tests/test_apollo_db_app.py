@@ -104,14 +104,14 @@ def test_dashboard_requires_password_and_csrf(monkeypatch):
     assert c.get("/").status_code == 302                      # not signed in: sent to the login page
     assert c.post("/login", data={"password": "bad"}).status_code == 200
     assert c.post("/login", data={"password": "pw123"}).status_code == 302
-    page = c.get("/").get_data(as_text=True)
+    page = c.get("/list").get_data(as_text=True)
     assert "dana@acme.dev" in page and "javascript:alert" not in page  # unsafe link never rendered
     assert c.post("/tracker", data={"key": "acme.dev|dana@acme.dev", "contact_status": "queued"}).status_code == 400
     with c.session_transaction() as s:
         token = s["csrf"]
     r = c.post("/tracker", data={"csrf": token, "key": "acme.dev|dana@acme.dev", "contact_status": "queued", "notes": "<b>x</b>"})
     assert r.status_code == 302
-    assert "&lt;b&gt;x&lt;/b&gt;" in c.get("/").get_data(as_text=True)  # escaped, not rendered as HTML
+    assert "&lt;b&gt;x&lt;/b&gt;" in c.get("/list").get_data(as_text=True)  # escaped, not rendered as HTML
 
 
 def test_public_mode_needs_no_sign_in_but_keeps_csrf(monkeypatch):
@@ -120,12 +120,14 @@ def test_public_mode_needs_no_sign_in_but_keeps_csrf(monkeypatch):
     appmod = importlib.reload(appmod)
     _seed_db()
     c = appmod.app.test_client()
-    page = c.get("/")
+    page = c.get("/list")
     assert page.status_code == 200 and "dana@acme.dev" in page.get_data(as_text=True)
     assert "Sign out" not in page.get_data(as_text=True)
     assert c.get("/login").status_code == 302                                   # login page just goes back to the dashboard
     assert c.post("/tracker", data={"key": "acme.dev|dana@acme.dev"}).status_code == 400  # edits still need the CSRF token
-    assert "noindex" in c.get("/").headers["X-Robots-Tag"]
+    assert "noindex" in c.get("/list").headers["X-Robots-Tag"]
+    home = c.get("/")
+    assert home.status_code == 302 and home.headers["Location"].endswith("/board")  # the board is the home page
 
 
 def test_dashboard_disabled_without_password():
@@ -140,16 +142,16 @@ def test_filters_csv_and_inline_status(monkeypatch):
     appmod = importlib.reload(appmod)
     _seed_db()
     c = appmod.app.test_client()
-    page = c.get("/?email=1&tier=B").get_data(as_text=True)
+    page = c.get("/list?email=1&tier=B").get_data(as_text=True)
     assert "dana@acme.dev" in page and 'data-copy="dana@acme.dev"' in page and "leads</span>" in page
-    assert "No leads match" in c.get("/?tier=C").get_data(as_text=True)
+    assert "No leads match" in c.get("/list?tier=C").get_data(as_text=True)
     csvtext = c.get("/export.csv?email=1").get_data(as_text=True)
     assert csvtext.splitlines()[0].lstrip("﻿").startswith("rank,tier") and "dana@acme.dev" in csvtext
     with c.session_transaction() as s:
         s["csrf"] = "tok"
     c.post("/tracker", data={"csrf": "tok", "key": "acme.dev|dana@acme.dev", "contact_status": "replied"})
-    assert "No leads match" in c.get("/?status=queued").get_data(as_text=True)
-    assert "dana@acme.dev" in c.get("/?status=replied").get_data(as_text=True)
+    assert "No leads match" in c.get("/list?status=queued").get_data(as_text=True)
+    assert "dana@acme.dev" in c.get("/list?status=replied").get_data(as_text=True)
 
 
 def test_board_drag_status_and_manual_contacts(monkeypatch):

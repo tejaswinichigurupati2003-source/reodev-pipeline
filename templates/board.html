@@ -1,27 +1,8 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Outreach board</title>
-<style>
-:root{--bg1:#e9edf2;--bg2:#f3f1e4;--fg:#151513;--mut:#7a7a74;--card:#fff;--line:#e6e6e1;--side:#fff;--dark:#161614;--acc:#2f5bea;--a:#1b7f4d;--b:#a86a00;--c:#7a7a74;
- --s0:#eef2f8;--s1:#f3effa;--s2:#fdf6e1;--s3:#fdeceb;--s4:#e8edfc;--s5:#e6f4ea;--s6:#f1f1ee;--s7:#f6efe8;
- --h0:#1d3b8b;--h1:#5b2a9c;--h2:#8a6200;--h3:#a2362b;--h4:#2447b8;--h5:#1b6e3e;--h6:#55554f;--h7:#7a4b1f}
-@media(prefers-color-scheme:dark){:root{--bg1:#101113;--bg2:#15160f;--fg:#efefe9;--mut:#9a9a93;--card:#242422;--line:#3a3a37;--side:#1c1c1a;--dark:#efefe9;--acc:#7c9bff;--a:#4cc38a;--b:#e0a43a;
- --s0:#1b2230;--s1:#241d33;--s2:#2d2815;--s3:#33201f;--s4:#1b2338;--s5:#172a1f;--s6:#242422;--s7:#2c241b;
- --h0:#9db5ff;--h1:#c9a6ff;--h2:#f0c868;--h3:#ff9d93;--h4:#9db5ff;--h5:#7fdca0;--h6:#bdbdb6;--h7:#e6b98a}}
-*{box-sizing:border-box}html,body{height:100%}
-body{margin:0;font:14px/1.4 system-ui,-apple-system,Segoe UI,sans-serif;color:var(--fg);background:linear-gradient(160deg,var(--bg1),var(--bg2))}
-.app{display:grid;grid-template-columns:240px 1fr;gap:16px;padding:16px;min-height:100%}
-.side{background:var(--side);border-radius:20px;padding:18px 14px;position:sticky;top:16px;align-self:start;max-height:calc(100vh - 32px);overflow:auto}
-.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:17px;margin:2px 6px 16px}.logo{width:34px;height:34px;border-radius:10px;background:var(--dark);color:var(--bg1);display:grid;place-items:center;font-weight:800}
-.sec{font-size:11px;letter-spacing:.12em;color:var(--mut);margin:16px 8px 6px;text-transform:uppercase}
-.nav a{display:flex;justify-content:space-between;align-items:center;padding:9px 10px;border-radius:11px;color:var(--fg);text-decoration:none;margin-bottom:2px}
-.nav a:hover{background:var(--s0)}.nav a.on{background:var(--dark);color:var(--bg1)}.nav .n{font-size:12px;color:var(--mut)}.nav a.on .n{color:inherit;opacity:.7}
-main{min-width:0}
-.top{background:var(--card);border-radius:18px;padding:12px 18px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;color:var(--mut)}
-.top b{color:var(--fg);font-weight:600}
-.head{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;margin:18px 4px 16px}
-h1{font-size:34px;letter-spacing:-.02em;margin:0}.sub{color:var(--mut);margin-top:2px}
-.pill{background:var(--card);border:1px solid var(--line);border-radius:99px;padding:9px 16px;color:var(--fg);text-decoration:none;cursor:pointer;font:inherit;display:inline-block}
-.pill.dark{background:var(--dark);color:var(--bg1);border-color:var(--dark);font-weight:600}
+{% extends "shell.html" %}
+{% set active = 'board' %}
+{% block title %}Outreach board{% endblock %}
+{% block crumb %}Outreach board{% endblock %}
+{% block css %}
 .board{display:flex;gap:14px;overflow-x:auto;padding:2px 2px 26px;align-items:stretch;min-height:68vh}
 .col{flex:0 0 285px;border-radius:22px;padding:14px 12px 12px;border:1.5px dashed var(--line);display:flex;flex-direction:column}
 .col.over{outline:2px solid var(--acc);outline-offset:-3px}
@@ -30,8 +11,6 @@ h1{font-size:34px;letter-spacing:-.02em;margin:0}.sub{color:var(--mut);margin-to
 .card{background:var(--card);border-radius:16px;padding:12px 14px;box-shadow:0 1px 2px #0000000d,0 4px 14px #0000000a;cursor:grab}
 .card.drag{opacity:.35}
 .ct{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}.ct b{font-size:15px;line-height:1.25}
-.tag{font-size:11px;font-weight:700;padding:2px 9px;border-radius:99px;background:var(--s4);white-space:nowrap}
-.t-A{color:var(--a);background:var(--s5)}.t-B{color:var(--b);background:var(--s2)}.t-C,.t-SKIP{color:var(--c);background:var(--s6)}.t-MY{color:var(--h1);background:var(--s1)}
 .who{color:var(--mut);margin:2px 0 8px;font-size:13px;overflow-wrap:anywhere}
 .big{display:flex;justify-content:space-between;align-items:baseline}.big b{font-size:24px;letter-spacing:-.01em}.big span{color:var(--mut);font-size:13px}
 .bar{height:5px;border-radius:9px;background:var(--line);margin:7px 0 10px;overflow:hidden}.bar i{display:block;height:100%;background:linear-gradient(90deg,#8ccf5f,#1b7f4d);border-radius:9px}
@@ -41,36 +20,18 @@ h1{font-size:34px;letter-spacing:-.02em;margin:0}.sub{color:var(--mut);margin-to
 .mv{font:inherit;font-size:12px;color:var(--mut);background:none;border:1px solid var(--line);border-radius:8px;padding:2px 4px;max-width:96px}
 .x{background:none;border:0;color:var(--mut);cursor:pointer;font-size:16px;padding:0 2px}
 .add{margin-top:10px;border:1.5px dashed currentColor;border-radius:14px;background:none;padding:10px;font:inherit;font-weight:600;cursor:pointer;width:100%}
-.toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:var(--dark);color:var(--bg1);padding:9px 16px;border-radius:99px;display:none;z-index:20}
 dialog{border:0;border-radius:20px;padding:22px;width:min(420px,92vw);background:var(--card);color:var(--fg);box-shadow:0 20px 60px #0004}
 dialog::backdrop{background:#0006}dialog h3{margin:0 0 12px;font-size:20px}
-dialog label{display:block;font-size:12px;color:var(--mut);margin:10px 0 3px}
-dialog input,dialog select{width:100%;font:inherit;color:inherit;background:var(--bg1);border:1px solid var(--line);border-radius:10px;padding:9px 10px}
+dialog label{display:block;font-size:12px;color:var(--mut);margin:10px 0 3px}dialog input,dialog select{width:100%}
 .row2{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
-@media(max-width:860px){.app{grid-template-columns:1fr}.side{position:static;max-height:none}.col{flex-basis:78vw}}
-</style></head><body><div class="app">
-<aside class="side">
- <div class="brand"><span class="logo">R</span>Reo.Dev</div>
- <div class="sec">Workspace</div>
- <nav class="nav"><a class="on" href="{{ url_for('board') }}">Outreach board <span class="n">{{ total_all }}</span></a>
-  <a href="{{ url_for('index') }}">List view</a><a href="{{ url_for('export_csv') }}">Download CSV</a></nav>
- <div class="sec">Research</div>
- <nav class="nav"><a href="{{ url_for('interview_home') }}">Interview questions</a><a href="{{ url_for('research') }}" target="_blank" rel="noopener">Research form (to send)</a><a href="{{ url_for('responses') }}">Form responses</a></nav>
- <div class="sec">Filter</div>
- <nav class="nav">
-  <a href="{{ url_for('board') }}" class="{{ '' if (tier or only_email) else 'on' }}">All leads <span class="n">{{ total_all }}</span></a>
-  {% for t,label in [('MY','Added by you'),('A','Tier A'),('B','Tier B'),('C','Tier C')] %}
-  <a href="{{ url_for('board', tier=t) }}" class="{{ 'on' if tier==t else '' }}">{{ label }} <span class="n">{{ counts.get(t,0) }}</span></a>{% endfor %}
- </nav>
- {% if not public %}<form method="post" action="{{ url_for('logout') }}" style="margin-top:18px"><input type="hidden" name="csrf" value="{{ csrf() }}"><button class="pill">Sign out</button></form>{% endif %}
-</aside>
-<main>
- <div class="top"><span>Workspace / <b>Outreach board</b></span><span>Reo.Dev &middot; Common Room switch campaign</span></div>
- <div class="head"><div><h1>Outreach board</h1><div class="sub">{{ total }} of {{ total_all }} leads shown &middot; drag a card to change its stage</div>
+@media(max-width:860px){.col{flex-basis:78vw}}
+{% endblock %}
+{% block content %}
+ <div class="head"><div><h1>Outreach board</h1><div class="sub">{{ total }} of {{ nav_total }} leads shown &middot; drag a card to change its stage</div>
   {% if tier or only_email %}<div class="sub" style="margin-top:8px"><b style="color:var(--fg)">Filters on:</b>
    {% if tier %}<span class="tag t-{{ tier }}">{{ 'Added by you' if tier=='MY' else 'Tier ' ~ tier }}</span>{% endif %}
    {% if only_email %}<span class="tag t-MY">only with email</span>{% endif %}
-   <a href="{{ url_for('board') }}" style="color:var(--acc);margin-left:6px">Clear filters</a></div>{% endif %}</div>
+   <a href="{{ url_for('board') }}" style="margin-left:6px">Clear filters</a></div>{% endif %}</div>
   <div><a class="pill {{ 'dark' if only_email }}" href="{{ url_for('board', tier=tier, email=None if only_email else '1') }}">{{ 'Only with email: on' if only_email else 'Only with email' }}</a>
   <button class="pill dark" data-add="not contacted">+ Add contact</button></div></div>
  <div class="board" id="board" data-csrf="{{ csrf() }}">
@@ -90,15 +51,13 @@ dialog input,dialog select{width:100%;font:inherit;color:inherit;background:var(
       {% if l.email %}<span class="em" data-copy="{{ l.email }}" title="Click to copy">{{ l.email }}</span>{% else %}<span class="em">no email yet</span>{% endif %}
       <span>{{ (l.days ~ 'd in stage') if l.days is not none else 'new' }}</span></div>
      <div class="ft" style="margin-top:8px"><select class="mv" aria-label="Move to stage">{% for t in statuses %}<option {{ 'selected' if t==s }}>{{ t }}</option>{% endfor %}</select>
-      <span style="flex:1"></span><a href="{{ url_for('interview_guide', key=l.key) }}" style="color:var(--acc);text-decoration:none;font-size:12px;margin-right:6px">Interview guide</a>
+      <span style="flex:1"></span><a href="{{ url_for('interview_guide', key=l.key) }}" style="text-decoration:none;font-size:12px;margin-right:6px">Interview guide</a>
       {% if l.manual %}<form method="post" action="{{ url_for('contacts_delete') }}" onsubmit="return confirm('Remove this contact?')"><input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="key" value="{{ l.key }}"><button class="x" title="Remove">&times;</button></form>{% endif %}</div>
     </div>
    {% endfor %}</div>
    <button class="add" style="color:var(--h{{ i }})" data-add="{{ s }}">+ Add contact</button>
   </section>
  {% endfor %}</div>
-</main></div>
-
 <dialog id="addbox"><form method="post" action="{{ url_for('contacts_add') }}"><h3>Add a contact</h3>
  <input type="hidden" name="csrf" value="{{ csrf() }}">
  <label>Company *</label><input name="company" required maxlength="120" placeholder="e.g. Notion">
@@ -108,7 +67,8 @@ dialog input,dialog select{width:100%;font:inherit;color:inherit;background:var(
  <label>Email</label><input name="email" type="email" maxlength="200" placeholder="name@company.com">
  <label>Stage</label><select name="status" id="addstatus">{% for s in statuses %}<option>{{ s }}</option>{% endfor %}</select>
  <div class="row2"><button type="button" class="pill" id="cancel">Cancel</button><button class="pill dark">Add contact</button></div></form></dialog>
-<div class="toast" id="toast"></div>
+{% endblock %}
+{% block scripts %}
 <script>
 (function(){
  var board=document.getElementById('board'),csrf=board.dataset.csrf,dragged=null,toast=document.getElementById('toast'),box=document.getElementById('addbox');
@@ -133,4 +93,5 @@ dialog input,dialog select{width:100%;font:inherit;color:inherit;background:var(
  });
  document.getElementById('cancel').addEventListener('click',function(){box.close()});
 })();
-</script></body></html>
+</script>
+{% endblock %}

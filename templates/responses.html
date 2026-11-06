@@ -1,11 +1,13 @@
-{% extends "simple.html" %}
+{% extends "shell.html" %}
+{% set active = 'responses' %}
 {% block title %}Research responses{% endblock %}
-{% block width %}1100px{% endblock %}
-{% block body %}
-<div class="nav"><a href="{{ url_for('board') }}">Board</a><a href="{{ url_for('interview_home') }}">Interview questions</a><a href="{{ url_for('research') }}" target="_blank" rel="noopener">Open the form</a><a href="{{ url_for('responses_csv') }}">Download CSV</a></div>
-<h1>Research form responses</h1>
-<p class="mut">{{ rows|length }} so far. These are people's personal details: keep this page private and delete what you no longer need.</p>
-<div class="card" style="overflow-x:auto">
+{% block crumb %}Form responses{% endblock %}
+{% block content %}
+<div class="head"><div><h1>Research form responses</h1>
+ <div class="sub">{{ rows|length }} so far. These are people's personal details: keep this page private and delete what you no longer need.</div></div>
+ <div class="noprint"><a class="pill" href="{{ url_for('research') }}" target="_blank" rel="noopener">Open the form</a>
+ <a class="pill dark" href="{{ url_for('responses_csv') }}">Download CSV</a></div></div>
+<div class="panel" style="overflow-x:auto">
 {% if rows %}<table><tr><th>When (UTC)</th><th>Name</th><th>Email</th><th>Company</th><th>Role</th><th>Common Room</th><th>Tools</th><th>Availability</th></tr>
 {% for r in rows %}<tr><td>{{ r.created_at }}</td><td>{{ r.name }}</td><td>{{ r.email }}</td><td>{{ r.company }}</td><td>{{ r.role }}</td><td>{{ r.cr_status }}</td><td>{{ r.tools }}</td><td>{{ r.availability }}</td></tr>{% endfor %}</table>
 {% else %}<p>No replies yet. Send people the form link: <a href="{{ url_for('research', _external=True) }}">{{ url_for('research', _external=True) }}</a></p>{% endif %}</div>

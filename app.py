@@ -12,7 +12,7 @@ from datetime import datetime, timezone
 
 from dotenv import load_dotenv
 from werkzeug.middleware.proxy_fix import ProxyFix
-from flask import Flask, abort, redirect, render_template, request, session, url_for
+from flask import Flask, abort, g, redirect, render_template, request, session, url_for
 
 import db
 import interview
@@ -57,6 +57,21 @@ def _csrf():
 app.jinja_env.globals["csrf"] = _csrf
 
 
+@app.context_processor
+def nav_numbers():
+    """Sidebar numbers shown on every page. Never lets a database hiccup break a page."""
+    try:
+        counts = getattr(g, "nav_counts", None)
+        if counts is None:
+            counts = {}
+            for l in db.list_leads():
+                counts[l["tier"]] = counts.get(l["tier"], 0) + 1
+            g.nav_counts = counts
+    except Exception:
+        counts = {}
+    return {"nav_counts": counts, "nav_total": sum(counts.values()), "public": PUBLIC}
+
+
 @app.template_filter("safe_url")
 def safe_url(value):
     """Only http(s) links are clickable: a seed CSV could hold javascript: links."""
@@ -71,13 +86,13 @@ def _check_csrf():
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if PUBLIC:
-        return redirect(url_for("index"))
+        return redirect(url_for("board"))
     error = None
     if request.method == "POST":
         if PASSWORD and hmac.compare_digest(request.form.get("password", "").encode(), PASSWORD.encode()):
             session.clear()
             session["ok"] = True
-            return redirect(url_for("index"))
+            return redirect(url_for("board"))
         error = "Wrong password."
     return render_template("login.html", error=error)
 
@@ -90,6 +105,11 @@ def logout():
 
 
 @app.route("/")
+def home():
+    return redirect(url_for("board"))
+
+
+@app.route("/list")
 def index():
     tier = request.args.get("tier") or None
     if tier not in (None, "A", "B", "C", "SKIP", "MY"):
@@ -122,11 +142,7 @@ def board():
         except ValueError:
             l["days"] = None
         cols[l["contact_status"] if l["contact_status"] in cols else "not contacted"].append(l)
-    counts = {}
-    for l in db.list_leads():
-        counts[l["tier"]] = counts.get(l["tier"], 0) + 1
-    return render_template("board.html", public=PUBLIC, cols=cols, statuses=db.STATUSES, tier=tier, only_email=only_email,
-                           total=len(leads), counts=counts, total_all=sum(counts.values()))
+    return render_template("board.html", cols=cols, statuses=db.STATUSES, tier=tier, only_email=only_email, total=len(leads))
 
 
 @app.post("/contacts/add")
