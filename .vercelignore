@@ -6,3 +6,5 @@ steps/
 scrapers/
 discover.py
 pipeline.py
+.env*
+.vercel
