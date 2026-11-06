@@ -39,7 +39,8 @@ form.t textarea{grid-column:1/-1;min-height:60px}
   <div class="mut">{{ l.how_identified }}{% if l.source_url|safe_url %} &middot; <a href="{{ l.source_url|safe_url }}" target="_blank" rel="noopener noreferrer">source</a>{% endif %}</div>
   <div class="mut">{{ l.devrel_evidence or 'No verified developer-community signals.' }}</div></details>
  {% if l.draft_body %}<details><summary class="mut">Email draft (never sent){% if l.draft_flags %} &middot; needs review: {{ l.draft_flags }}{% endif %}</summary>
-  <strong>{{ l.draft_subject }}</strong><pre style="white-space:pre-wrap;font:inherit;margin:6px 0">{{ l.draft_body }}</pre></details>{% endif %}
+  <strong>{{ l.draft_subject }}</strong><pre style="white-space:pre-wrap;font:inherit;margin:6px 0">{{ l.draft_body }}</pre>
+  {% if l.email and '@' in l.email and ' ' not in l.email %}<a href="mailto:{{ l.email }}?subject={{ (l.draft_subject or '')|urlencode }}&amp;body={{ (l.draft_body or '')|urlencode }}">Open in my email app (you press send)</a>{% endif %}</details>{% endif %}
  <form class="t" method="post" action="{{ url_for('tracker') }}">
   <input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="key" value="{{ l.domain }}|{{ (l.email or '')|lower }}">
   <select name="contact_status">{% for s in statuses %}<option {{ 'selected' if s==l.contact_status }}>{{ s }}</option>{% endfor %}</select>

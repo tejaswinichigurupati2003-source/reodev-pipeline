@@ -11,10 +11,12 @@ One failing account never stops the others. Nothing is ever sent: this pipeline 
 """
 import argparse
 import logging
+import re
 import sys
 
 import db
 import discover
+import pipeline_io as io
 import export
 from steps import s1_scrape, s2_extract, s3_score, s4_contacts, s5_draft
 
@@ -30,6 +32,16 @@ def research(account, fresh=False):
         return None
     s2_extract.run(domain, fresh=fresh)
     return s3_score.run(domain, status=account["status"])
+
+
+def names_match(account):
+    """Guard for guessed websites: does the company the page describes look like the account we meant?
+    Only applies to domain_unconfirmed rows. Unknown extracted name = allow."""
+    if account.get("status") != "domain_unconfirmed":
+        return True
+    company = (io.load_json(account["domain"], "step2_extracted.json").get("company") or "").lower()
+    first = re.sub(r"[^a-z0-9]", "", account["name"].split("/")[0].split()[0].lower())
+    return not company or not first or first in re.sub(r"[^a-z0-9]", "", company)
 
 
 def run_all(accounts, max_hunter=40, contacts=True, fresh=False, tiers=("A", "B"), drafts=True):
@@ -50,6 +62,9 @@ def run_all(accounts, max_hunter=40, contacts=True, fresh=False, tiers=("A", "B"
         spent = 0
         for a, res in ranked:
             d = a["domain"]
+            if not names_match(a):
+                log.info("%s: skipped contacts, page describes a different company than '%s' (check the domain)", d, a["name"])
+                continue
             if not s4_contacts.is_cached(d):
                 if spent >= max_hunter:
                     log.info("%s: skipped contacts, Hunter budget (%d) used up", d, max_hunter)

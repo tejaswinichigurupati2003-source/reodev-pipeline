@@ -42,9 +42,12 @@ def check(draft, first_name, raw):
         flags.append("no 15-minute ask")
     low = (subject + " " + body).lower()
     flags += [f"banned phrase: {b!r}" for b in BANNED if b in low]
-    if re.search(r"\d", body.replace("15", "")):
-        flags.append("contains a number that is not traceable")
     quote = draft.get("hook_quote", "")
+    # numbers only count when they stand alone (not "n8n"), and the verified hook quote may contain its own numbers
+    checked = body.replace(quote, "") if quote else body
+    checked = re.sub(r"\b15[- ]?min(?:ute)?s?\b", "", checked)
+    if re.search(r"(?<![A-Za-z0-9])\d", checked):
+        flags.append("contains a number that is not traceable")
     if quote:
         page = (raw.get("pages") or {}).get(draft.get("hook_source_url"))
         if not (page and _norm(quote) in _norm(page.get("text"))):

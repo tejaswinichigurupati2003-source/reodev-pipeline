@@ -33,6 +33,13 @@ def test_banned_content_flagged(bad):
     assert flags
 
 
+def test_digit_in_company_name_and_in_verified_quote_not_flagged():
+    raw = {"pages": {"https://acme.dev": {"ok": True, "text": "Join 10k+ developers in our community."}}}
+    body = GOOD_BODY.replace("Join our community", "x").replace("an active Discord community.", 'a community: "Join 10k+ developers in our community." Teams like n8n use Reo.Dev.')
+    d, flags = s5_draft.check(draft(body=body, hook_quote="Join 10k+ developers in our community.", hook_source_url="https://acme.dev"), "Dana", raw)
+    assert not any("number" in f for f in flags)
+
+
 def test_wrong_greeting_and_long_subject_flagged():
     _, flags = s5_draft.check(draft(body=GOOD_BODY.replace("Hi Dana,", "Dear Sir,"), subject="one two three four five six seven eight"), "Dana", RAW)
     assert len(flags) == 2
