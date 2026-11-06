@@ -114,7 +114,39 @@ def test_dashboard_requires_password_and_csrf(monkeypatch):
     assert "&lt;b&gt;x&lt;/b&gt;" in c.get("/").get_data(as_text=True)  # escaped, not rendered as HTML
 
 
+def test_public_mode_needs_no_sign_in_but_keeps_csrf(monkeypatch):
+    monkeypatch.setenv("DASHBOARD_PUBLIC", "1")
+    import app as appmod
+    appmod = importlib.reload(appmod)
+    _seed_db()
+    c = appmod.app.test_client()
+    page = c.get("/")
+    assert page.status_code == 200 and "dana@acme.dev" in page.get_data(as_text=True)
+    assert "Sign out" not in page.get_data(as_text=True)
+    assert c.get("/login").status_code == 302                                   # login page just goes back to the dashboard
+    assert c.post("/tracker", data={"key": "acme.dev|dana@acme.dev"}).status_code == 400  # edits still need the CSRF token
+    assert "noindex" in c.get("/").headers["X-Robots-Tag"]
+
+
 def test_dashboard_disabled_without_password():
     import app as appmod
     appmod = importlib.reload(appmod)
     assert appmod.app.test_client().get("/").status_code == 503
+
+
+def test_filters_csv_and_inline_status(monkeypatch):
+    monkeypatch.setenv("DASHBOARD_PUBLIC", "1")
+    import app as appmod
+    appmod = importlib.reload(appmod)
+    _seed_db()
+    c = appmod.app.test_client()
+    page = c.get("/?email=1&tier=B").get_data(as_text=True)
+    assert "dana@acme.dev" in page and 'data-copy="dana@acme.dev"' in page and "leads</span>" in page
+    assert "No leads match" in c.get("/?tier=C").get_data(as_text=True)
+    csvtext = c.get("/export.csv?email=1").get_data(as_text=True)
+    assert csvtext.splitlines()[0].lstrip("﻿").startswith("rank,tier") and "dana@acme.dev" in csvtext
+    with c.session_transaction() as s:
+        s["csrf"] = "tok"
+    c.post("/tracker", data={"csrf": "tok", "key": "acme.dev|dana@acme.dev", "contact_status": "replied"})
+    assert "No leads match" in c.get("/?status=queued").get_data(as_text=True)
+    assert "dana@acme.dev" in c.get("/?status=replied").get_data(as_text=True)

@@ -1,52 +1,89 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Reo.Dev lead tracker</title>
 <style>
-:root{--bg:#f6f6f4;--fg:#222;--card:#fff;--line:#e2e2de;--mut:#6b6b66;--a:#1b7f4d;--b:#a86a00;--c:#6b6b66}
-@media(prefers-color-scheme:dark){:root{--bg:#161615;--fg:#eee;--card:#222221;--line:#3a3a38;--mut:#a0a09a;--a:#4cc38a;--b:#e0a43a;--c:#a0a09a}}
-body{font:15px system-ui;margin:0;background:var(--bg);color:var(--fg)}
-header,main{padding:16px;max-width:1200px;margin:auto}
-header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
-nav a{padding:6px 12px;border:1px solid var(--line);border-radius:99px;text-decoration:none;color:var(--fg);margin-right:6px;display:inline-block;margin-bottom:6px}
-nav a.on{background:var(--fg);color:var(--bg)}
-input,select,textarea,button{font:inherit;color:inherit;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:6px 8px}
-.lead{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px}
-.top{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:baseline;justify-content:space-between}
-.tier{font-weight:700;padding:2px 10px;border-radius:99px;border:1px solid currentColor}.tier-A{color:var(--a)}.tier-B{color:var(--b)}.tier-C,.tier-SKIP{color:var(--c)}
-.mut{color:var(--mut);font-size:13px}.meta{display:flex;flex-wrap:wrap;gap:4px 14px;margin:6px 0}
-details{margin:6px 0}form.t{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;margin-top:10px}
-form.t textarea{grid-column:1/-1;min-height:60px}
-</style></head><body>
-<header><h1 style="margin:0;font-size:20px">Reo.Dev lead tracker</h1>
-<form method="post" action="{{ url_for('logout') }}"><input type="hidden" name="csrf" value="{{ csrf() }}"><button>Sign out</button></form></header>
-<main>
-<form method="get" style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
-<input name="q" value="{{ q }}" placeholder="Search company, domain or person"><input type="hidden" name="tier" value="{{ tier or '' }}"><button>Search</button></form>
-<nav><a href="{{ url_for('index') }}" class="{{ '' if tier else 'on' }}">All</a>
-{% for t in ['A','B','C','SKIP'] %}<a href="{{ url_for('index', tier=t) }}" class="{{ 'on' if tier==t else '' }}">Tier {{ t }} ({{ counts.get(t,0) }})</a>{% endfor %}</nav>
-<p class="mut">{{ leads|length }} rows shown, {{ with_email }} with an email. Scores are a model with assumed weights; the switching score is a proxy, not a forecast. Emails are unverified until checked.</p>
-{% for l in leads %}
-<div class="lead">
- <div class="top"><div><span class="tier tier-{{ l.tier }}">{{ l.tier }}</span> <strong>{{ l.company }}</strong> <span class="mut">{{ l.domain }} &middot; score {{ l.score }}</span></div>
- <span class="mut">#{{ l.rank }}</span></div>
- <div class="meta"><span>{{ l.company_type or 'unknown type' }}</span><span>headcount: {{ l.headcount or 'unknown' }}</span>
- <span class="mut">fit {{ l.fit }} &middot; value {{ l.value }} &middot; switching proxy {{ l.switching_proxy }} &middot; ease {{ l.ease }}</span>
- <span class="mut">account: {{ l.account_status }}</span></div>
- <div>{% if l.contact_name %}<strong>{{ l.contact_name }}</strong>, {{ l.contact_title }} <span class="mut">({{ l.persona }})</span><br>
-  {% if l.email %}{{ l.email }} <span class="mut">confidence {{ l.email_confidence }} via {{ l.contact_source }}</span>{% endif %}
-  {% else %}<span class="mut">No contact found.</span>{% endif %}
-  {% if l.linkedin_search|safe_url %} <a href="{{ l.linkedin_search|safe_url }}" target="_blank" rel="noopener noreferrer">find on LinkedIn</a>{% endif %}</div>
- <details><summary class="mut">How identified and evidence</summary>
-  <div class="mut">{{ l.how_identified }}{% if l.source_url|safe_url %} &middot; <a href="{{ l.source_url|safe_url }}" target="_blank" rel="noopener noreferrer">source</a>{% endif %}</div>
-  <div class="mut">{{ l.devrel_evidence or 'No verified developer-community signals.' }}</div></details>
- {% if l.draft_body %}<details><summary class="mut">Email draft (never sent){% if l.draft_flags %} &middot; needs review: {{ l.draft_flags }}{% endif %}</summary>
-  <strong>{{ l.draft_subject }}</strong><pre style="white-space:pre-wrap;font:inherit;margin:6px 0">{{ l.draft_body }}</pre>
-  {% if l.email and '@' in l.email and ' ' not in l.email %}<a href="mailto:{{ l.email }}?subject={{ (l.draft_subject or '')|urlencode }}&amp;body={{ (l.draft_body or '')|urlencode }}">Open in my email app (you press send)</a>{% endif %}</details>{% endif %}
- <form class="t" method="post" action="{{ url_for('tracker') }}">
-  <input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="key" value="{{ l.domain }}|{{ (l.email or '')|lower }}">
-  <select name="contact_status">{% for s in statuses %}<option {{ 'selected' if s==l.contact_status }}>{{ s }}</option>{% endfor %}</select>
-  <input name="channel" placeholder="channel" value="{{ l.channel or '' }}"><input name="last_touch" placeholder="last touch (date)" value="{{ l.last_touch or '' }}">
-  <input name="reply" placeholder="reply" value="{{ l.reply or '' }}"><input name="interview_done" placeholder="interview done?" value="{{ l.interview_done or '' }}">
-  <textarea name="notes" placeholder="notes">{{ l.notes or '' }}</textarea><button>Save</button></form>
+:root{--bg:#f6f6f4;--fg:#1f1f1d;--card:#fff;--line:#e3e3df;--mut:#6b6b66;--a:#1b7f4d;--b:#a86a00;--c:#6b6b66;--acc:#2f5bea}
+@media(prefers-color-scheme:dark){:root{--bg:#161615;--fg:#eee;--card:#222221;--line:#3a3a38;--mut:#a0a09a;--a:#4cc38a;--b:#e0a43a;--c:#a0a09a;--acc:#7c9bff}}
+*{box-sizing:border-box}body{font:15px/1.45 system-ui,sans-serif;margin:0;background:var(--bg);color:var(--fg)}
+.wrap{max-width:1180px;margin:auto;padding:16px}
+h1{font-size:20px;margin:0}header{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;justify-content:space-between;margin-bottom:12px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:14px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 14px}.stat b{display:block;font-size:22px}.stat span{color:var(--mut);font-size:13px}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
+input,select,textarea,button,.btn{font:inherit;color:inherit;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:6px 10px}
+button,.btn{cursor:pointer;text-decoration:none;display:inline-block}button:hover,.btn:hover{border-color:var(--acc)}
+.chips a{display:inline-block;padding:5px 12px;border:1px solid var(--line);border-radius:99px;text-decoration:none;color:var(--fg);margin:0 4px 4px 0;background:var(--card)}
+.chips a.on{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.row{background:var(--card);border:1px solid var(--line);border-radius:10px;margin-bottom:8px}
+.sum{display:grid;grid-template-columns:34px 44px minmax(150px,1.2fr) minmax(170px,1.4fr) minmax(210px,1.5fr) 150px;gap:8px 12px;align-items:center;padding:10px 12px}
+.sum>*{min-width:0;overflow-wrap:anywhere}
+.tier{font-weight:700;text-align:center;padding:2px 0;border-radius:99px;border:1px solid currentColor}.tier-A{color:var(--a)}.tier-B{color:var(--b)}.tier-C,.tier-SKIP{color:var(--c)}
+.mut{color:var(--mut);font-size:13px}.co b{display:block}
+.email{display:flex;gap:6px;align-items:center}.email code{font-size:13px}
+.copy{padding:2px 8px;font-size:12px}
+.sum select{width:100%;padding:5px 6px}
+details.more{border-top:1px solid var(--line);padding:6px 12px 12px}details.more>summary{cursor:pointer;color:var(--mut);font-size:13px;padding:4px 0}
+pre{white-space:pre-wrap;font:inherit;background:var(--bg);border-radius:8px;padding:10px;margin:6px 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px;margin-top:8px}.grid textarea{grid-column:1/-1;min-height:64px}
+.flag{color:var(--b);font-size:13px}
+@media(max-width:820px){.sum{grid-template-columns:34px 44px 1fr}.sum .contact,.sum .mail,.sum .stat2{grid-column:1/-1}}
+</style></head><body><div class="wrap">
+<header><h1>Reo.Dev lead tracker</h1>
+<div><a class="btn" href="{{ url_for('export_csv', tier=tier, q=q, email='1' if only_email else None, status=status) }}">Download CSV</a>
+{% if not public %}<form method="post" action="{{ url_for('logout') }}" style="display:inline"><input type="hidden" name="csrf" value="{{ csrf() }}"><button>Sign out</button></form>{% endif %}</div></header>
+
+<div class="stats">
+ <div class="stat"><b>{{ stats.rows }}</b><span>leads</span></div>
+ <div class="stat"><b>{{ stats.with_email }}</b><span>with an email</span></div>
+ <div class="stat"><b>{{ stats.contacted }}</b><span>contacted</span></div>
+ <div class="stat"><b>{{ stats.replied }}</b><span>replied or interviewing</span></div>
 </div>
-{% else %}<p>No leads yet. Run the pipeline, then <code>python sync_db.py</code>.</p>{% endfor %}
-</main></body></html>
+
+<form class="bar" method="get">
+ <input name="q" value="{{ q }}" placeholder="Search company, domain or person" style="flex:1;min-width:200px">
+ <input type="hidden" name="tier" value="{{ tier or '' }}">
+ <label><input type="checkbox" name="email" value="1" {{ 'checked' if only_email }}> only with email</label>
+ <select name="status"><option value="">any status</option>{% for s in statuses %}<option {{ 'selected' if s==status }}>{{ s }}</option>{% endfor %}</select>
+ <button>Apply</button>
+</form>
+<div class="chips">
+ <a href="{{ url_for('index', email='1' if only_email else None, status=status, q=q or None) }}" class="{{ '' if tier else 'on' }}">All</a>
+ {% for t in ['A','B','C','SKIP'] %}<a href="{{ url_for('index', tier=t, email='1' if only_email else None, status=status, q=q or None) }}" class="{{ 'on' if tier==t else '' }}">Tier {{ t }} ({{ counts.get(t,0) }})</a>{% endfor %}
+</div>
+<p class="mut">Showing {{ leads|length }}. Scores use assumed weights and the switching score is a proxy, not a forecast. Emails are unverified until you check them. Drafts are never sent: you press send in your own mail app.</p>
+
+{% for l in leads %}
+<div class="row">
+ <div class="sum">
+  <span class="mut">#{{ l.rank }}</span>
+  <span class="tier tier-{{ l.tier }}">{{ l.tier }}</span>
+  <div class="co"><b>{{ l.company }}</b><span class="mut">{{ l.domain }} &middot; score {{ l.score }}</span></div>
+  <div class="contact">{% if l.contact_name %}<b>{{ l.contact_name }}</b><br><span class="mut">{{ l.contact_title }}</span>{% else %}<span class="mut">No contact found</span>{% endif %}</div>
+  <div class="mail">{% if l.email %}<div class="email"><code>{{ l.email }}</code><button type="button" class="copy" data-copy="{{ l.email }}">Copy</button></div>
+   <span class="mut">confidence {{ l.email_confidence }} &middot; {{ l.contact_source }}</span>{% elif l.linkedin_search|safe_url %}<a href="{{ l.linkedin_search|safe_url }}" target="_blank" rel="noopener noreferrer">Find on LinkedIn</a>{% endif %}</div>
+  <form class="stat2" method="post" action="{{ url_for('tracker') }}">
+   <input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="key" value="{{ l.domain }}|{{ (l.email or '')|lower }}">
+   <input type="hidden" name="channel" value="{{ l.channel or '' }}"><input type="hidden" name="last_touch" value="{{ l.last_touch or '' }}">
+   <input type="hidden" name="reply" value="{{ l.reply or '' }}"><input type="hidden" name="interview_done" value="{{ l.interview_done or '' }}"><input type="hidden" name="notes" value="{{ l.notes or '' }}">
+   <select name="contact_status" onchange="this.form.submit()" aria-label="Status">{% for s in statuses %}<option {{ 'selected' if s==l.contact_status }}>{{ s }}</option>{% endfor %}</select>
+  </form>
+ </div>
+ <details class="more"><summary>Details, draft and notes{% if l.draft_flags %} &middot; <span class="flag">needs review</span>{% endif %}</summary>
+  <div class="mut">{{ l.company_type or 'unknown type' }} &middot; headcount {{ l.headcount or 'unknown' }} &middot; fit {{ l.fit }}, value {{ l.value }}, switching proxy {{ l.switching_proxy }}, ease {{ l.ease }} &middot; account {{ l.account_status }}{% if l.persona %} &middot; {{ l.persona }}{% endif %}</div>
+  <div class="mut">{{ l.how_identified }}{% if l.source_url|safe_url %} &middot; <a href="{{ l.source_url|safe_url }}" target="_blank" rel="noopener noreferrer">source</a>{% endif %}</div>
+  <div class="mut">{{ l.devrel_evidence or 'No verified developer-community signals.' }}</div>
+  {% if l.draft_body %}<strong>{{ l.draft_subject }}</strong>{% if l.draft_flags %}<div class="flag">Check: {{ l.draft_flags }}</div>{% endif %}
+   <pre>{{ l.draft_body }}</pre>
+   {% if l.email and '@' in l.email and ' ' not in l.email %}<a class="btn" href="mailto:{{ l.email }}?subject={{ (l.draft_subject or '')|urlencode }}&amp;body={{ (l.draft_body or '')|urlencode }}">Open in my email app (you press send)</a>{% endif %}{% endif %}
+  <form method="post" action="{{ url_for('tracker') }}"><input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="key" value="{{ l.domain }}|{{ (l.email or '')|lower }}">
+   <div class="grid"><select name="contact_status">{% for s in statuses %}<option {{ 'selected' if s==l.contact_status }}>{{ s }}</option>{% endfor %}</select>
+   <input name="channel" placeholder="channel" value="{{ l.channel or '' }}"><input name="last_touch" placeholder="last touch (date)" value="{{ l.last_touch or '' }}">
+   <input name="reply" placeholder="reply" value="{{ l.reply or '' }}"><input name="interview_done" placeholder="interview done?" value="{{ l.interview_done or '' }}">
+   <textarea name="notes" placeholder="notes">{{ l.notes or '' }}</textarea><button>Save</button></div></form>
+ </details>
+</div>
+{% else %}<p>No leads match. Clear the filters, or run the pipeline and <code>python sync_db.py</code>.</p>{% endfor %}
+</div>
+<script>
+document.addEventListener('click',function(e){var b=e.target.closest('[data-copy]');if(!b)return;
+ navigator.clipboard.writeText(b.dataset.copy).then(function(){b.textContent='Copied';setTimeout(function(){b.textContent='Copy'},1200)});});
+</script></body></html>

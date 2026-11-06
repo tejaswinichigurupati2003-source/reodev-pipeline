@@ -85,7 +85,7 @@ def sync(rows):
     return len(rows)
 
 
-def list_leads(tier=None, search=None):
+def list_leads(tier=None, search=None, only_email=False, status=None):
     with connect() as db:
         init(db)
         sql = ("SELECT l.*, COALESCE(t.contact_status, 'not contacted') AS contact_status, t.channel, t.last_touch, "
@@ -97,6 +97,11 @@ def list_leads(tier=None, search=None):
         if search:
             where.append("(LOWER(l.company) LIKE ? OR LOWER(l.domain) LIKE ? OR LOWER(COALESCE(l.contact_name, '')) LIKE ?)")
             params += [f"%{search.lower()}%"] * 3
+        if only_email:
+            where.append("COALESCE(l.email, '') <> ''")
+        if status in STATUSES:
+            where.append("COALESCE(t.contact_status, 'not contacted') = ?")
+            params.append(status)
         if where:
             sql += " WHERE " + " AND ".join(where)
         return db.rows(sql + " ORDER BY l.rank", params)
