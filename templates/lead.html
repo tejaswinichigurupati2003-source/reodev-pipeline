@@ -1,0 +1,72 @@
+{% extends "shell.html" %}
+{% set active = 'board' %}
+{% block title %}{{ l.company }}{% endblock %}
+{% block crumb %}<a href="{{ url_for('board') }}" style="color:inherit">Outreach board</a> / {{ l.company }}{% endblock %}
+{% block css %}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px;align-items:start}
+.panel label{display:block;font-size:12px;color:var(--mut);margin:12px 0 3px}.panel input,.panel select,.panel textarea{width:100%}
+.panel textarea{min-height:120px}.acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+dl{display:grid;grid-template-columns:130px 1fr;gap:6px 12px;margin:0}dt{color:var(--mut)}dd{margin:0;overflow-wrap:anywhere}
+.ro{background:var(--s6);color:var(--mut)}
+{% endblock %}
+{% block content %}
+<div class="head"><div><h1>{{ l.company }}</h1>
+ <div class="sub"><span class="tag t-{{ l.tier }}">{{ 'Added by you' if l.tier=='MY' else 'Tier ' ~ l.tier }}</span>
+  {{ l.domain }}{% if l.score is not none %} &middot; fit score {{ l.score }}{% endif %}{% if l.archived %} &middot; <b>archived</b>{% endif %}</div></div>
+ <div class="noprint"><a class="pill" href="{{ url_for('board') }}">Back to board</a>
+  <a class="pill" href="{{ url_for('interview_guide', key=l.key) }}">Interview guide</a>
+  <form method="post" action="{{ url_for('lead_archive') }}" style="display:inline"><input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="key" value="{{ l.key }}">
+   <input type="hidden" name="archive" value="{{ '' if l.archived else '1' }}"><button class="pill">{{ 'Restore' if l.archived else 'Archive' }}</button></form></div></div>
+
+<div class="two">
+ <form class="panel" method="post" action="{{ url_for('lead_edit') }}" data-once>
+  <h2>Contact details</h2>
+  <input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="key" value="{{ l.key }}"><input type="hidden" name="v" value="{{ l.edit_updated_at }}">
+  <label for="f-company">Company{% if l.manual %} *{% endif %}</label>
+  <input id="f-company" name="company" value="{{ l.company }}" maxlength="120" {{ 'required' if l.manual else 'readonly class=ro' }}>
+  <label for="f-domain">Website</label><input id="f-domain" name="domain" value="{{ l.domain or '' }}" maxlength="120" {{ '' if l.manual else 'readonly class=ro' }}>
+  <label for="f-name">Person</label><input id="f-name" name="contact_name" value="{{ l.contact_name or '' }}" maxlength="120">
+  <label for="f-title">Job title</label><input id="f-title" name="contact_title" value="{{ l.contact_title or '' }}" maxlength="120">
+  <label for="f-email">Email</label><input id="f-email" name="email" type="email" value="{{ l.email or '' }}" maxlength="200">
+  <label for="f-li">LinkedIn profile link</label><input id="f-li" name="linkedin" type="url" value="{{ l.linkedin or '' }}" maxlength="300" placeholder="https://www.linkedin.com/in/...">
+  {% if not l.manual %}<p class="mut">The company and website come from the pipeline. Your edits to the person are kept even after the next sync.{% if l.edited %} (edited by you){% endif %}</p>{% endif %}
+  <div class="acts"><button class="btn primary">Save details</button><a class="btn" href="{{ url_for('lead', key=l.key) }}">Cancel</a>
+   {% if l.linkedin|safe_url %}<a class="btn" href="{{ l.linkedin|safe_url }}" target="_blank" rel="noopener noreferrer">Open LinkedIn</a>
+   {% elif l.linkedin_search|safe_url %}<a class="btn" href="{{ l.linkedin_search|safe_url }}" target="_blank" rel="noopener noreferrer">Find on LinkedIn</a>{% endif %}</div>
+ </form>
+
+ <form class="panel" method="post" action="{{ url_for('tracker') }}" data-once>
+  <h2>Outreach and notes</h2>
+  <input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="key" value="{{ l.key }}"><input type="hidden" name="next" value="{{ url_for('lead', key=l.key) }}"><input type="hidden" name="v" value="{{ l.updated_at or '' }}">
+  <label for="t-stage">Stage</label><select id="t-stage" name="contact_status">{% for s in statuses %}<option {{ 'selected' if s==l.contact_status }}>{{ s }}</option>{% endfor %}</select>
+  <label for="t-ch">Channel</label><input id="t-ch" name="channel" value="{{ l.channel or '' }}" maxlength="200" placeholder="email, LinkedIn, call">
+  <label for="t-lt">Last touch</label><input id="t-lt" name="last_touch" value="{{ l.last_touch or '' }}" maxlength="200" placeholder="date">
+  <label for="t-re">Reply</label><input id="t-re" name="reply" value="{{ l.reply or '' }}" maxlength="500">
+  <label for="t-id">Interview done?</label><input id="t-id" name="interview_done" value="{{ l.interview_done or '' }}" maxlength="200">
+  <label for="t-no">Notes</label><textarea id="t-no" name="notes" maxlength="2000">{{ l.notes or '' }}</textarea>
+  {% if l.updated_at %}<p class="mut">Last changed {{ l.updated_at }} (UTC)</p>{% endif %}
+  <div class="acts"><button class="btn primary">Save outreach</button><a class="btn" href="{{ url_for('lead', key=l.key) }}">Cancel</a></div>
+ </form>
+</div>
+
+<div class="panel"><h2>Why this lead</h2>
+ <dl><dt>Type</dt><dd>{{ l.company_type or 'unknown' }}{% if l.headcount %} &middot; headcount {{ l.headcount }}{% endif %}</dd>
+  {% if l.score is not none %}<dt>Score</dt><dd>fit {{ l.fit }}, value {{ l.value }}, switching proxy {{ l.switching_proxy }}, ease {{ l.ease }}. The switching score is a proxy, not a forecast.</dd>{% endif %}
+  <dt>Found how</dt><dd>{{ l.how_identified }}{% if l.source_url|safe_url %} &middot; <a href="{{ l.source_url|safe_url }}" target="_blank" rel="noopener noreferrer">source</a>{% endif %}</dd>
+  <dt>Role group</dt><dd>{{ l.persona or 'not set' }}</dd>
+  <dt>Signals</dt><dd>{{ l.devrel_evidence or 'No verified developer-community signals.' }}</dd>
+  {% if l.email %}<dt>Email source</dt><dd>{{ l.contact_source or 'entered by you' }}{% if l.email_confidence %} &middot; confidence {{ l.email_confidence }}{% endif %}. Treat it as unverified until you check it.</dd>{% endif %}</dl></div>
+
+{% if l.draft_body %}<div class="panel"><h2>Email draft (never sent)</h2><strong>{{ l.draft_subject }}</strong>
+ {% if l.draft_flags %}<div style="color:var(--b)">Check: {{ l.draft_flags }}</div>{% endif %}<pre>{{ l.draft_body }}</pre>
+ {% if l.email and '@' in l.email and ' ' not in l.email %}<a class="btn primary" href="mailto:{{ l.email }}?subject={{ (l.draft_subject or '')|urlencode }}&amp;body={{ (l.draft_body or '')|urlencode }}">Open in my email app (you press send)</a>{% endif %}</div>{% endif %}
+
+{% if l.manual %}<div class="panel"><h2>Remove this contact</h2><p class="mut">You added this contact yourself, so you can delete it for good. This cannot be undone.</p>
+ <form method="post" action="{{ url_for('contacts_delete') }}" onsubmit="return confirm('Delete this contact permanently?')"><input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="key" value="{{ l.key }}"><button class="btn" style="color:var(--warn)">Delete contact</button></form></div>{% endif %}
+{% endblock %}
+{% block scripts %}
+<script>
+document.querySelectorAll('form[data-once]').forEach(function(f){f.addEventListener('submit',function(){
+ var b=f.querySelector('button.primary');if(b){b.disabled=true;b.textContent='Saving...'}})});
+</script>
+{% endblock %}

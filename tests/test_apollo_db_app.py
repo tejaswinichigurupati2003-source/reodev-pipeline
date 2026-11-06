@@ -111,7 +111,7 @@ def test_dashboard_requires_password_and_csrf(monkeypatch):
         token = s["csrf"]
     r = c.post("/tracker", data={"csrf": token, "key": "acme.dev|dana@acme.dev", "contact_status": "queued", "notes": "<b>x</b>"})
     assert r.status_code == 302
-    assert "&lt;b&gt;x&lt;/b&gt;" in c.get("/list").get_data(as_text=True)  # escaped, not rendered as HTML
+    assert "&lt;b&gt;x&lt;/b&gt;" in c.get("/lead?key=acme.dev%7Cdana%40acme.dev").get_data(as_text=True)  # notes escaped, not rendered as HTML
 
 
 def test_public_mode_needs_no_sign_in_but_keeps_csrf(monkeypatch):
@@ -175,8 +175,12 @@ def test_board_drag_status_and_manual_contacts(monkeypatch):
     assert c.post("/contacts/add", data={"company": "Notion", "email": "a@notion.so"}).status_code == 400            # CSRF
     r = c.post("/contacts/add", data={"csrf": "tok", "company": "Notion", "name": "Erica A", "email": "erica@notion.so", "status": "queued"})
     assert r.status_code == 302
-    assert c.post("/contacts/add", data={"csrf": "tok", "company": "", "email": "x"}).status_code == 400
-    assert c.post("/contacts/add", data={"csrf": "tok", "company": "Bad", "email": "not-an-email"}).status_code == 400
+    fetch = {"X-Requested-With": "fetch"}
+    assert c.post("/contacts/add", data={"csrf": "tok", "company": "", "email": "x"}, headers=fetch).status_code == 400
+    bad = c.post("/contacts/add", data={"csrf": "tok", "company": "Bad", "email": "not-an-email"}, headers=fetch)
+    assert bad.status_code == 400 and "email" in bad.get_json()["error"]
+    plain = c.post("/contacts/add", data={"csrf": "tok", "company": "Bad", "email": "not-an-email"})   # no JavaScript: message + redirect
+    assert plain.status_code == 302 and "email" in c.get("/board").get_data(as_text=True).lower()
     mine = [l for l in db.list_leads() if l.get("manual")]
     assert len(mine) == 1 and mine[0]["contact_status"] == "queued" and mine[0]["tier"] == "MY"
     assert ok(key=mine[0]["key"], status="contacted") == 200

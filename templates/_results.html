@@ -1,0 +1,21 @@
+<p class="mut">{{ total }} lead{{ '' if total==1 else 's' }}{% if pages > 1 %}, page {{ page }} of {{ pages }}{% endif %}. Scores use assumed weights and the switching score is a proxy, not a forecast. Emails are unverified until you check them. Drafts are never sent.</p>
+
+{% for l in leads %}
+<div class="row" data-key="{{ l.key }}">
+ <div class="sum">
+  <span class="mut">#{{ l.rank }}</span>
+  <span class="tag t-{{ l.tier }}">{{ 'Added by you' if l.tier=='MY' else 'Tier ' ~ l.tier }}</span>
+  <div class="co"><b><a href="{{ url_for('lead', key=l.key) }}">{{ l.company }}</a></b><span class="mut">{{ l.domain }}{% if l.score is not none %} &middot; score {{ l.score }}{% endif %}{% if l.archived %} &middot; archived{% endif %}</span></div>
+  <div class="contact">{% if l.contact_name %}<b>{{ l.contact_name }}</b><br><span class="mut">{{ l.contact_title }}</span>{% else %}<span class="mut">No contact found</span>{% endif %}</div>
+  <div class="mail">{% if l.email %}<div class="email"><code>{{ l.email }}</code><button type="button" class="copy" data-copy="{{ l.email }}">Copy</button></div>
+   <span class="mut">confidence {{ l.email_confidence }} &middot; {{ l.contact_source or 'entered by you' }}</span>{% elif l.linkedin_search|safe_url %}<a href="{{ l.linkedin_search|safe_url }}" target="_blank" rel="noopener noreferrer">Find on LinkedIn</a>{% endif %}</div>
+  <div class="stat2"><select class="stage" aria-label="Stage for {{ l.company }}">{% for s in statuses %}<option {{ 'selected' if s==l.contact_status }}>{{ s }}</option>{% endfor %}</select>
+   <a href="{{ url_for('lead', key=l.key) }}" class="mut">Open, edit, notes</a></div>
+ </div>
+</div>
+{% else %}<div class="panel">No leads match. <a href="{{ url_for('index') }}">Clear the filters</a>, or run the pipeline and <code>python sync_db.py</code>.</div>{% endfor %}
+
+{% if pages > 1 %}<nav class="pager" aria-label="Pages">
+ {% if page > 1 %}<a class="pill" href="{{ url_for('index', page=page-1, **keep) }}">&larr; Previous</a>{% endif %}
+ <span class="mut">Page {{ page }} of {{ pages }}</span>
+ {% if page < pages %}<a class="pill" href="{{ url_for('index', page=page+1, **keep) }}">Next &rarr;</a>{% endif %}</nav>{% endif %}

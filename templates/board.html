@@ -11,6 +11,9 @@
 .card{background:var(--card);border-radius:16px;padding:12px 14px;box-shadow:0 1px 2px #0000000d,0 4px 14px #0000000a;cursor:grab}
 .card.drag{opacity:.35}
 .ct{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}.ct b{font-size:15px;line-height:1.25}
+.co-link{color:inherit;text-decoration:none}.co-link:hover{text-decoration:underline}
+.board.loading{opacity:.45;transition:opacity .15s}.morelink{display:block;text-align:center;padding:8px;font-size:13px}
+.card{cursor:pointer}.card:hover{box-shadow:0 2px 4px #0000001a,0 8px 22px #00000014}
 .who{color:var(--mut);margin:2px 0 8px;font-size:13px;overflow-wrap:anywhere}
 .big{display:flex;justify-content:space-between;align-items:baseline}.big b{font-size:24px;letter-spacing:-.01em}.big span{color:var(--mut);font-size:13px}
 .bar{height:5px;border-radius:9px;background:var(--line);margin:7px 0 10px;overflow:hidden}.bar i{display:block;height:100%;background:linear-gradient(90deg,#8ccf5f,#1b7f4d);border-radius:9px}
@@ -27,60 +30,45 @@ dialog label{display:block;font-size:12px;color:var(--mut);margin:10px 0 3px}dia
 @media(max-width:860px){.col{flex-basis:78vw}}
 {% endblock %}
 {% block content %}
- <div class="head"><div><h1>Outreach board</h1><div class="sub">{{ total }} of {{ nav_total }} leads shown &middot; drag a card to change its stage</div>
-  {% if tier or only_email %}<div class="sub" style="margin-top:8px"><b style="color:var(--fg)">Filters on:</b>
+ <div class="head"><div><h1>Outreach board</h1><div class="sub">{{ total }} of {{ nav().values()|sum }} leads shown &middot; drag a card to change its stage</div>
+  {% if tier or only_email or q %}<div class="sub" style="margin-top:8px"><b style="color:var(--fg)">Filters on:</b>
+   {% if q %}<span class="tag t-MY">search: {{ q }}</span>{% endif %}
    {% if tier %}<span class="tag t-{{ tier }}">{{ 'Added by you' if tier=='MY' else 'Tier ' ~ tier }}</span>{% endif %}
    {% if only_email %}<span class="tag t-MY">only with email</span>{% endif %}
    <a href="{{ url_for('board') }}" style="margin-left:6px">Clear filters</a></div>{% endif %}</div>
-  <div><a class="pill {{ 'dark' if only_email }}" href="{{ url_for('board', tier=tier, email=None if only_email else '1') }}">{{ 'Only with email: on' if only_email else 'Only with email' }}</a>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+  <form method="get" role="search" style="display:flex;gap:6px"><input type="hidden" name="tier" value="{{ tier or '' }}">{% if only_email %}<input type="hidden" name="email" value="1">{% endif %}
+   <input name="q" id="bq" value="{{ q }}" placeholder="Search company or person" aria-label="Search the board" autocomplete="off" style="min-width:200px"><button class="pill">Search</button></form>
+  <a class="pill {{ 'dark' if only_email }}" href="{{ url_for('board', tier=tier, q=q or None, email=None if only_email else '1') }}">{{ 'Only with email: on' if only_email else 'Only with email' }}</a>
   <button class="pill dark" data-add="not contacted">+ Add contact</button></div></div>
  <div class="board" id="board" data-csrf="{{ csrf() }}">
- {% for s in statuses %}{% set i = loop.index0 %}
-  <section class="col" data-status="{{ s }}" style="background:var(--s{{ i }})">
-   <div class="ch"><div><b style="color:var(--h{{ i }})">{{ s }}</b><span class="cnt"><span class="count">{{ cols[s]|length }}</span> leads</span></div>
-    <span class="r" style="color:var(--h{{ i }})">{{ cols[s]|selectattr('email')|list|length }} <span class="cnt">with email</span></span></div>
-   <div class="cards">
-   {% if not cols[s] %}<div class="who" style="padding:6px 8px">{% if total == 0 and (tier or only_email) %}Nothing matches the filters.{% else %}Nothing here yet. Drag a card in.{% endif %}</div>{% endif %}
-   {% for l in cols[s] %}
-    <div class="card" draggable="true" data-key="{{ l.key }}">
-     <div class="ct"><b>{{ l.company }}</b><span class="tag t-{{ l.tier }}">{{ 'Added by you' if l.tier=='MY' else 'Tier ' ~ l.tier }}</span></div>
-     <div class="who">{% if l.contact_name %}{{ l.contact_name }}{% if l.contact_title %} &middot; {{ l.contact_title }}{% endif %}{% else %}No contact yet &middot; {{ l.domain }}{% endif %}</div>
-     <div class="big"><b>{{ l.score if l.score is not none else '—' }}</b><span>{{ 'fit score' if l.score is not none else 'manual' }}</span></div>
-     <div class="bar"><i style="width:{{ [l.score or 0, 100]|min }}%"></i></div>
-     <div class="ft"><span class="av">{{ ((l.contact_name or l.company)[:2])|upper }}</span>
-      {% if l.email %}<span class="em" data-copy="{{ l.email }}" title="Click to copy">{{ l.email }}</span>{% else %}<span class="em">no email yet</span>{% endif %}
-      <span>{{ (l.days ~ 'd in stage') if l.days is not none else 'new' }}</span></div>
-     <div class="ft" style="margin-top:8px"><select class="mv" aria-label="Move to stage">{% for t in statuses %}<option {{ 'selected' if t==s }}>{{ t }}</option>{% endfor %}</select>
-      <span style="flex:1"></span><a href="{{ url_for('interview_guide', key=l.key) }}" style="text-decoration:none;font-size:12px;margin-right:6px">Interview guide</a>
-      {% if l.manual %}<form method="post" action="{{ url_for('contacts_delete') }}" onsubmit="return confirm('Remove this contact?')"><input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="key" value="{{ l.key }}"><button class="x" title="Remove">&times;</button></form>{% endif %}</div>
-    </div>
-   {% endfor %}</div>
-   <button class="add" style="color:var(--h{{ i }})" data-add="{{ s }}">+ Add contact</button>
-  </section>
- {% endfor %}</div>
-<dialog id="addbox"><form method="post" action="{{ url_for('contacts_add') }}"><h3>Add a contact</h3>
+ {% include "_columns.html" %}</div>
+<dialog id="addbox"><form method="post" action="{{ url_for('contacts_add') }}" id="addform"><h3>Add a contact</h3>
+ <div class="err-inline" id="adderr" role="alert"></div>
  <input type="hidden" name="csrf" value="{{ csrf() }}">
  <label>Company *</label><input name="company" required maxlength="120" placeholder="e.g. Notion">
  <label>Website (optional)</label><input name="domain" maxlength="120" placeholder="notion.so">
  <label>Person</label><input name="name" maxlength="120" placeholder="Full name">
  <label>Job title</label><input name="title" maxlength="120" placeholder="Head of Growth">
- <label>Email</label><input name="email" type="email" maxlength="200" placeholder="name@company.com">
+ <label>Email</label><input name="email" type="email" maxlength="200" placeholder="name@company.com" autocomplete="off">
  <label>Stage</label><select name="status" id="addstatus">{% for s in statuses %}<option>{{ s }}</option>{% endfor %}</select>
- <div class="row2"><button type="button" class="pill" id="cancel">Cancel</button><button class="pill dark">Add contact</button></div></form></dialog>
+ <div class="row2"><button type="button" class="pill" id="cancel">Cancel</button><button class="pill dark" id="addgo">Add contact</button></div></form></dialog>
 {% endblock %}
 {% block scripts %}
 <script>
 (function(){
  var board=document.getElementById('board'),csrf=board.dataset.csrf,dragged=null,toast=document.getElementById('toast'),box=document.getElementById('addbox');
  function say(t){toast.textContent=t;toast.style.display='block';setTimeout(function(){toast.style.display='none'},1800)}
- function counts(){board.querySelectorAll('.col').forEach(function(c){c.querySelector('.count').textContent=c.querySelectorAll('.card').length})}
+ function counts(){board.querySelectorAll('.col').forEach(function(c){c.querySelector('.count').textContent=c.dataset.total})}
  function move(card,col){
   var from=card.parentNode,to=col.querySelector('.cards'),status=col.dataset.status;
   if(from===to)return;
+  var fromCol=from.closest('.col');
+  fromCol.dataset.total=+fromCol.dataset.total-1;col.dataset.total=+col.dataset.total+1;
   to.appendChild(card);card.querySelector('.mv').value=status;counts();
   fetch('{{ url_for("tracker_status") }}',{method:'POST',headers:{'Content-Type':'application/json','X-CSRF':csrf},body:JSON.stringify({key:card.dataset.key,status:status})})
-   .then(function(r){if(!r.ok)throw 0;say('Moved to '+status)})
-   .catch(function(){from.appendChild(card);card.querySelector('.mv').value=from.closest('.col').dataset.status;counts();say('Could not save, moved back')});
+   .then(function(r){return r.json().catch(function(){return {}}).then(function(j){if(!r.ok||!j.ok)throw (j.error||'Could not save, moved back');say('Moved to '+status)})})
+   .catch(function(msg){fromCol.dataset.total=+fromCol.dataset.total+1;col.dataset.total=+col.dataset.total-1;from.appendChild(card);card.querySelector('.mv').value=from.closest('.col').dataset.status;counts();say(typeof msg==='string'?msg:'Could not save, moved back')});
  }
  board.addEventListener('dragstart',function(e){var c=e.target.closest('.card');if(!c)return;dragged=c;c.classList.add('drag');e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',c.dataset.key)});
  board.addEventListener('dragend',function(){if(dragged)dragged.classList.remove('drag');dragged=null;board.querySelectorAll('.over').forEach(function(x){x.classList.remove('over')})});
@@ -92,6 +80,32 @@ dialog label{display:block;font-size:12px;color:var(--mut);margin:10px 0 3px}dia
   var c=e.target.closest('[data-copy]');if(c){navigator.clipboard.writeText(c.dataset.copy).then(function(){say('Copied '+c.dataset.copy)})}
  });
  document.getElementById('cancel').addEventListener('click',function(){box.close()});
+ var bq=document.getElementById('bq'),sub=document.querySelector('.head .sub'),timer=null,inflight=null;
+ function liveSearch(){
+  var params=new URLSearchParams(location.search);bq.value.trim()?params.set('q',bq.value.trim()):params.delete('q');
+  var url=location.pathname+(params.toString()?'?'+params:'');
+  if(inflight)inflight.abort();inflight=new AbortController();board.classList.add('loading');board.setAttribute('aria-busy','true');
+  fetch(url,{headers:{'X-Requested-With':'fetch'},signal:inflight.signal}).then(function(r){if(!r.ok)throw 0;
+   var total=r.headers.get('X-Total-Count');return r.text().then(function(h){board.innerHTML=h;history.replaceState(null,'',url);
+    if(sub&&total!==null)sub.textContent=sub.textContent.replace(/^\d+ of/,total+' of')})})
+   .catch(function(e){if(e&&e.name==='AbortError')return;say('Could not search. Check your connection.')})
+   .then(function(){board.classList.remove('loading');board.removeAttribute('aria-busy')});
+ }
+ if(bq){bq.addEventListener('input',function(){clearTimeout(timer);timer=setTimeout(liveSearch,250)});bq.form.addEventListener('submit',function(e){e.preventDefault();clearTimeout(timer);liveSearch()})}
+ var form=document.getElementById('addform'),err=document.getElementById('adderr'),go=document.getElementById('addgo');
+ form.addEventListener('submit',function(e){
+  e.preventDefault();if(go.disabled)return;
+  err.style.display='none';go.disabled=true;go.textContent='Adding...';
+  fetch(form.action,{method:'POST',headers:{'X-Requested-With':'fetch'},body:new FormData(form)})
+   .then(function(r){return r.json().catch(function(){return {ok:false,error:'Unexpected reply from the server.'}}).then(function(j){
+     if(!r.ok||!j.ok){err.textContent=j.error||'Could not add the contact.';err.style.display='block';go.disabled=false;go.textContent='Add contact';return}
+     location.reload();})})
+   .catch(function(){err.textContent='No connection. Check your internet and try again.';err.style.display='block';go.disabled=false;go.textContent='Add contact'});
+ });
+ box.addEventListener('close',function(){err.style.display='none';go.disabled=false;go.textContent='Add contact'});
+ board.addEventListener('click',function(e){
+  var card=e.target.closest('.card');if(!card||e.target.closest('a,button,select,input,form,[data-copy]'))return;
+  location.href=card.querySelector('.co-link').href;});
 })();
 </script>
 {% endblock %}
