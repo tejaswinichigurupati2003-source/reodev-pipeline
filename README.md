@@ -76,3 +76,6 @@ A re-sync replaces the `leads` table but never touches your tracker notes.
 * **Safe edits:** forms carry a version. If someone else saved the same lead first, your save is refused with a message instead of
   silently overwriting theirs. Stage changes (dragging, the stage menus) only touch the stage.
 * **Tests never touch your data:** `tests/conftest.py` blocks `.env` and `DATABASE_URL`.
+
+## The research form (`/research`)
+A one-question-at-a-time form built on the team's ten questions (`research_form.py` holds the wording, the dropdown options and the quick-pick chips; edit them there). It shows progress, accepts Ctrl+Enter for next, lets people skip anything, saves a draft on their device, and ends with a review screen. Without JavaScript it falls back to one plain page. The wording adapts for people who have not used Common Room. Answers are stored with each response and appear (with a CSV download) on the private `/responses` page.
