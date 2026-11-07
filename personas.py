@@ -40,6 +40,8 @@ _AVOID = [
     (re.compile(r"performance marketing|paid (?:media|social|search|acquisition)|\bppc\b|\bsem\b|media buy|\bbrand\b|public relations|\bpr\b|communications"), "Performance, paid or brand marketing, not a day-to-day user"),
     (re.compile(r"\b(?:director|vp|vice president|head|chief|svp|evp|general manager)\b.*\b(?:sales|business development|revenue officer|bd)\b|\bcro\b|chief revenue|\bsales (?:director|vp|head)\b"), "Senior sales leader: busy and rarely the daily user"),
     (re.compile(r"legal|counsel|finance|\bcfo\b|account(?:ing|ant)|controller|procurement"), "Finance or legal role, not a day-to-day user"),
+    (re.compile(r"employee resource|\berg\b|\bdei\b|diversity|inclusion|inorganic|corporate development|\bm&a\b|paid growth"),
+     "Internal, corporate or paid-acquisition role, not a developer-community user"),
     (re.compile(r"social media|commercial|enterprise (?:growth|sales|account)|regional (?:director|manager|vp|head|lead)|account (?:executive|manager|director)|territory|inside sales"),
      "Sales, regional or social-media role, not a developer-community user"),
 ]

@@ -18,7 +18,9 @@ UNLIKELY = ["Talent Acquisition Partner", "Technical Recruiter", "Director of Sa
             "Director of Sales Development", "Chief Revenue Officer", "CRO", "Director of Event Marketing", "Event Marketing Manager",
             "Director of Performance Marketing", "Paid Media Manager", "Brand Manager", "CMO", "Chief Executive Officer", "CFO", "General Counsel",
             "Social Media Community Manager", "Regional Director - Commercial Growth(APAC)", "Regional Director, Enterprise Growth",
-            "Account Executive", "Director, Talent Acquisition - GTM", "Vice President, Global Event Marketing", "Co-Founder & CEO"]
+            "Account Executive", "Director, Talent Acquisition - GTM", "Vice President, Global Event Marketing", "Co-Founder & CEO",
+            "DEI Community Leader, Latine Employee Resource Group", "Director, Product Strategy & Inorganic Growth",
+            "Senior Lifecycle Marketing Manager, Lifecycle + Paid Growth"]
 
 
 @pytest.mark.parametrize("title", BEST)
